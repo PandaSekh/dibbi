@@ -50,7 +50,7 @@ const (
 	NumericType
 )
 
-func (t *Token) equals(other *Token) bool {
+func (t *Token) Equals(other *Token) bool {
 	return t.Value == other.Value && t.Type == other.Type
 }
 
