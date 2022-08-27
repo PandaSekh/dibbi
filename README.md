@@ -1,4 +1,4 @@
-# go_dibbi
+# 🐳 go_dibbi
 
 Based on [this great blog post](https://notes.eatonphil.com/database-basics.html).  
 I started by following the tutorial with the intention of adding new features down the line as a learning process.
