@@ -40,15 +40,12 @@ func ProcessInput(text string, mb *MemoryBackend){
 				fmt.Println(err)
 				continue
 			}
-			fmt.Println("ok")
 		case InsertType:
 			err = mb.Insert(stmt.InsertStatement)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
-
-			fmt.Println("ok")
 		case SelectType:
 			results, err := mb.Select(stmt.SelectStatement)
 			if err != nil {
@@ -57,8 +54,6 @@ func ProcessInput(text string, mb *MemoryBackend){
 			}
 
 			printTable(results)
-
-			fmt.Println("ok")
 		}
 	}
 }

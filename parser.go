@@ -285,6 +285,16 @@ outer:
 			cursor++
 		}
 
+		// Check if it's star
+		t, newCursor, ok := parseToken(tokens, cursor, SymbolType)
+			if ok {
+				exps = append(exps, &Expression{
+					Literal:        t,
+					ExpressionType: LiteralType,
+				})
+				return &exps, newCursor, true
+			}
+
 		// Look for expression
 		exp, newCursor, ok := parseExpression(tokens, cursor, TokenFromSymbol(CommaSymbol))
 		if !ok {

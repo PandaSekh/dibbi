@@ -141,6 +141,11 @@ func (mb *MemoryBackend) Select(slct *SelectStatement) (*Results, error) {
             }
 
             lit := exp.Literal
+
+            if (isSelectFromAllExpression(exp)){
+                return selectStar(table)
+            }
+
             if lit.Type == IdentifierType {
                 found := false
                 for i, tableCol := range table.columns {
@@ -151,7 +156,7 @@ func (mb *MemoryBackend) Select(slct *SelectStatement) (*Results, error) {
                                 Name string
                             }{
                                 Type: table.columnTypes[i],
-                                Name: lit.Value,
+                                Name: table.columns[i],
                             })
                         }
 
@@ -179,3 +184,41 @@ func (mb *MemoryBackend) Select(slct *SelectStatement) (*Results, error) {
         Rows:    results,
     }, nil
 }
+
+func isSelectFromAllExpression(exp *Expression) bool {
+    return (exp.Literal.Type == SymbolType && exp.Literal.Value == TokenFromSymbol(AsteriskSymbol).Value)
+}
+
+func selectStar(table *dbtable) (*Results, error) {
+    results := [][]Cell{}
+    columns := []struct {
+        Type ColumnType
+        Name string
+    }{}
+
+    for i, row := range table.rows {
+        result := []Cell{}
+        isFirstRow := i == 0
+
+        for i, tableCol := range table.columns {
+            if isFirstRow {
+                columns = append(columns, struct {
+                    Type ColumnType
+                    Name string
+                }{
+                    Type: table.columnTypes[i],
+                    Name: tableCol,
+                })
+            }
+
+            result = append(result, row[i])
+        }
+
+        results = append(results, result)
+    }
+
+    return &Results{
+        Columns: columns,
+        Rows:    results,
+    }, nil
+} 
