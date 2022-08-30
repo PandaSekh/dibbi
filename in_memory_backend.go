@@ -79,24 +79,24 @@ var (
 	nullMemoryCell  = literalToMemoryCell(&Token{Type: NullType})
 )
 
-type dbtable struct {
+type dbTable struct {
 	columns     []string
 	columnTypes []ColumnType
 	rows        [][]MemoryCell
 }
 
 type MemoryBackend struct {
-	tables map[string]*dbtable
+	tables map[string]*dbTable
 }
 
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		tables: map[string]*dbtable{},
+		tables: map[string]*dbTable{},
 	}
 }
 
 func (mb *MemoryBackend) CreateTable(crt *CreateTableStatement) error {
-	t := dbtable{}
+	t := dbTable{}
 	mb.tables[crt.Name.Value] = &t
 	if crt.Columns == nil {
 
@@ -163,7 +163,7 @@ func (mb *MemoryBackend) tokenToCell(t *Token) MemoryCell {
 		if err != nil {
 			panic(err)
 		}
-		return MemoryCell(buf.Bytes())
+		return buf.Bytes()
 	}
 
 	if t.Type == StringType {
@@ -173,8 +173,8 @@ func (mb *MemoryBackend) tokenToCell(t *Token) MemoryCell {
 	return nil
 }
 
-func (mb *MemoryBackend) Select(slct *SelectStatement) (*Results, error) {
-	table, ok := mb.tables[slct.From.Value]
+func (mb *MemoryBackend) Select(selectStatement *SelectStatement) (*Results, error) {
+	table, ok := mb.tables[selectStatement.From.Value]
 	if !ok {
 		return nil, ErrTableDoesNotExist
 	}
@@ -189,7 +189,7 @@ func (mb *MemoryBackend) Select(slct *SelectStatement) (*Results, error) {
 		var result []Cell
 		isFirstRow := i == 0
 
-		for _, exp := range slct.Items {
+		for _, exp := range selectStatement.Items {
 			if exp.ExpressionType != LiteralType {
 				// Unsupported, doesn't currently exist, ignore.
 				fmt.Println("Skipping non-literal expression.")
@@ -245,7 +245,7 @@ func isSelectFromAllExpression(exp *Expression) bool {
 	return exp.Literal.Type == SymbolType && exp.Literal.Value == TokenFromSymbol(AsteriskSymbol).Value
 }
 
-func selectStar(table *dbtable) (*Results, error) {
+func selectStar(table *dbTable) (*Results, error) {
 	var results [][]Cell
 	var columns []struct {
 		Type ColumnType

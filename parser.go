@@ -85,7 +85,7 @@ func parseStatement(tokens []*Token, initialCursor uint, delimiter Token) (*Stat
 	}
 
 	// Look for a INSERT statement
-	insertStmt, newCursor, ok := parseInsertStatement(tokens, cursor, delimiter)
+	insertStmt, newCursor, ok := parseInsertStatement(tokens, cursor)
 	if ok {
 		return &Statement{
 			Type:            InsertType,
@@ -94,7 +94,7 @@ func parseStatement(tokens []*Token, initialCursor uint, delimiter Token) (*Stat
 	}
 
 	// Look for a CREATE statement
-	createTableStmt, newCursor, ok := parseCreateTableStatement(tokens, cursor, delimiter)
+	createTableStmt, newCursor, ok := parseCreateTableStatement(tokens, cursor)
 	if ok {
 		return &Statement{
 			Type:                 CreateTableType,
@@ -140,7 +140,7 @@ func parseSelectStatement(tokens []*Token, initialCursor uint, delimiter Token) 
 
 }
 
-func parseInsertStatement(tokens []*Token, initialCursor uint, delimiter Token) (*InsertStatement, uint, bool) {
+func parseInsertStatement(tokens []*Token, initialCursor uint) (*InsertStatement, uint, bool) {
 	cursor := initialCursor
 
 	// Look for INSERT
@@ -198,7 +198,7 @@ func parseInsertStatement(tokens []*Token, initialCursor uint, delimiter Token) 
 	}, cursor, true
 }
 
-func parseCreateTableStatement(tokens []*Token, initialCursor uint, delimiter Token) (*CreateTableStatement, uint, bool) {
+func parseCreateTableStatement(tokens []*Token, initialCursor uint) (*CreateTableStatement, uint, bool) {
 	cursor := initialCursor
 
 	if !assertIsToken(tokens, cursor, TokenFromKeyword(CreateKeyword)) {
@@ -237,7 +237,7 @@ func parseCreateTableStatement(tokens []*Token, initialCursor uint, delimiter To
 	cursor++
 
 	return &CreateTableStatement{
-		Name: name,
+		Name:    name,
 		Columns: cols,
 	}, cursor, true
 }
@@ -260,7 +260,7 @@ func parseToken(tokens []*Token, initialCursor uint, tokenType TokenType) (*Toke
 func parseExpressions(tokens []*Token, initialCursor uint, delimiters []Token) (*[]*Expression, uint, bool) {
 	cursor := initialCursor
 
-	exps := []*Expression{}
+	var exps []*Expression
 outer:
 	for {
 		if cursor >= uint(len(tokens)) {
@@ -287,13 +287,13 @@ outer:
 
 		// Check if it's star
 		t, newCursor, ok := parseToken(tokens, cursor, SymbolType)
-			if ok {
-				exps = append(exps, &Expression{
-					Literal:        t,
-					ExpressionType: LiteralType,
-				})
-				return &exps, newCursor, true
-			}
+		if ok {
+			exps = append(exps, &Expression{
+				Literal:        t,
+				ExpressionType: LiteralType,
+			})
+			return &exps, newCursor, true
+		}
 
 		// Look for expression
 		exp, newCursor, ok := parseExpression(tokens, cursor, TokenFromSymbol(CommaSymbol))
@@ -327,51 +327,51 @@ func parseExpression(tokens []*Token, initialCursor uint, _ Token) (*Expression,
 }
 
 func parseColumnDefinitions(tokens []*Token, initialCursor uint, delimiter Token) (*[]*ColumnDefinition, uint, bool) {
-    cursor := initialCursor
+	cursor := initialCursor
 
-    cds := []*ColumnDefinition{}
-    for {
-        if cursor >= uint(len(tokens)) {
-            return nil, initialCursor, false
-        }
+	var cds []*ColumnDefinition
+	for {
+		if cursor >= uint(len(tokens)) {
+			return nil, initialCursor, false
+		}
 
-        // Look for a delimiter
-        current := tokens[cursor]
-        if delimiter.Equals(current) {
-            break
-        }
+		// Look for a delimiter
+		current := tokens[cursor]
+		if delimiter.Equals(current) {
+			break
+		}
 
-        // Look for a comma
-        if len(cds) > 0 {
-            if !assertIsToken(tokens, cursor, TokenFromSymbol(CommaSymbol)) {
+		// Look for a comma
+		if len(cds) > 0 {
+			if !assertIsToken(tokens, cursor, TokenFromSymbol(CommaSymbol)) {
 				printHelpMessage(tokens, cursor, "Expected comma")
-                return nil, initialCursor, false
-            }
+				return nil, initialCursor, false
+			}
 
-            cursor++
-        }
+			cursor++
+		}
 
-        // Look for a column name
-        id, newCursor, ok := parseToken(tokens, cursor, IdentifierType)
-        if !ok {
-            printHelpMessage(tokens, cursor, "Expected column name")
-            return nil, initialCursor, false
-        }
-        cursor = newCursor
+		// Look for a column name
+		id, newCursor, ok := parseToken(tokens, cursor, IdentifierType)
+		if !ok {
+			printHelpMessage(tokens, cursor, "Expected column name")
+			return nil, initialCursor, false
+		}
+		cursor = newCursor
 
-        // Look for a column type
-        ty, newCursor, ok := parseToken(tokens, cursor, KeywordType)
-        if !ok {
-            printHelpMessage(tokens, cursor, "Expected column type")
-            return nil, initialCursor, false
-        }
-        cursor = newCursor
+		// Look for a column type
+		ty, newCursor, ok := parseToken(tokens, cursor, KeywordType)
+		if !ok {
+			printHelpMessage(tokens, cursor, "Expected column type")
+			return nil, initialCursor, false
+		}
+		cursor = newCursor
 
-        cds = append(cds, &ColumnDefinition{
-            Name:     id,
-            Datatype: ty,
-        })
-    }
+		cds = append(cds, &ColumnDefinition{
+			Name:     id,
+			Datatype: ty,
+		})
+	}
 
-    return &cds, cursor, true
+	return &cds, cursor, true
 }
