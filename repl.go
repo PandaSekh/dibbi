@@ -9,9 +9,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-func startRepl() {
-	mb := NewMemoryBackend()
-
+func startRepl(mb *MemoryBackend) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("go_dibbi started.")
 	for {
@@ -23,41 +21,44 @@ func startRepl() {
 		}
 
 		text = strings.Replace(text, "\n", "", -1)
+		ProcessInput(text, mb)
+	}
+}
 
-		ast, err := parse(text)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+func ProcessInput(text string, mb *MemoryBackend){
+	ast, err := parse(text)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-		for _, stmt := range ast.Statements {
-			switch stmt.Type {
-			case CreateTableType:
-				err = mb.CreateTable(ast.Statements[0].CreateTableStatement)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-				fmt.Println("ok")
-			case InsertType:
-				err = mb.Insert(stmt.InsertStatement)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-
-				fmt.Println("ok")
-			case SelectType:
-				results, err := mb.Select(stmt.SelectStatement)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-
-				printTable(results)
-
-				fmt.Println("ok")
+	for _, stmt := range ast.Statements {
+		switch stmt.Type {
+		case CreateTableType:
+			err = mb.CreateTable(ast.Statements[0].CreateTableStatement)
+			if err != nil {
+				fmt.Println(err)
+				continue
 			}
+			fmt.Println("ok")
+		case InsertType:
+			err = mb.Insert(stmt.InsertStatement)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			fmt.Println("ok")
+		case SelectType:
+			results, err := mb.Select(stmt.SelectStatement)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			printTable(results)
+
+			fmt.Println("ok")
 		}
 	}
 }
