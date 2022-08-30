@@ -1,4 +1,5 @@
 # 🐳 go_dibbi
+[![Build](https://github.com/PandaSekh/go_dibbi/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/PandaSekh/go_dibbi/actions/workflows/build_and_test.yml)
 
 Based on [this great blog post](https://notes.eatonphil.com/database-basics.html).  
 I started by following the tutorial with the intention of adding new features down the line as a learning process.
