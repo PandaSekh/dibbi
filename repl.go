@@ -11,7 +11,7 @@ import (
 
 func startRepl(mb *MemoryBackend) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("go_dibbi started.")
+	fmt.Println("dibbi started.")
 	for {
 		fmt.Print("# ")
 		text, err := reader.ReadString('\n')
@@ -25,7 +25,7 @@ func startRepl(mb *MemoryBackend) {
 	}
 }
 
-func ProcessInput(text string, mb *MemoryBackend){
+func ProcessInput(text string, mb *MemoryBackend) {
 	ast, err := parse(text)
 	if err != nil {
 		fmt.Println(err)

@@ -1,4 +1,4 @@
-module go_dibbi
+module dibbi
 
 go 1.18
 
