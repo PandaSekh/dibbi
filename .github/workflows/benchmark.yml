@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v1
       - name: Run benchmark
-        run: go test -bench=. | tee benchamrks/output.txt
+        run: go build && go test -bench=. | tee benchamrks/output.txt
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
