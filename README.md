@@ -13,7 +13,7 @@ Features:
 - Automatic migrations on startup
 
 TODO List:
-- `SELECT *` to get all columns
+- ~~`SELECT *` to get all columns~~
 - `WHERE` clause
 - More column types (bool, uuid)
 - Automatic uuid on insertion, if specified during `CREATE TABLE`
