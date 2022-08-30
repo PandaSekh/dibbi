@@ -7,15 +7,17 @@ type ColumnType uint
 const (
 	TextType ColumnType = iota
 	IntType
+	BoolType
 )
 
 func (ct ColumnType) String() string {
-	return [...]string{"Text", "Int"}[ct]
+	return [...]string{"Text", "Int", "Bool"}[ct]
 }
 
 type Cell interface {
 	AsText() string
 	AsInt() int32
+	AsBool() bool
 }
 
 type Results struct {

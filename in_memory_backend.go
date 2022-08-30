@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math/big"
 	"strconv"
 )
 
@@ -13,7 +14,8 @@ func (mc MemoryCell) AsInt() int32 {
     var i int32
     err := binary.Read(bytes.NewBuffer(mc), binary.BigEndian, &i)
     if err != nil {
-        panic(err)
+        fmt.Printf("Corrupted data [%s]: %s\n", mc, err)
+        return 0
     }
 
     return i
@@ -22,6 +24,60 @@ func (mc MemoryCell) AsInt() int32 {
 func (mc MemoryCell) AsText() string {
     return string(mc)
 }
+
+func (mc MemoryCell) AsBool() bool {
+    return len(mc) != 0
+}
+
+func (mc MemoryCell) equals(b MemoryCell) bool {
+    if mc == nil || b == nil {
+        return mc == nil && b == nil
+    }
+
+    return bytes.Equal(mc, b)
+}
+
+// literalToMemoryCell maps a Go value into a memory cell
+func literalToMemoryCell(t *Token) MemoryCell {
+	if t.Type == NumericType {
+		buf := new(bytes.Buffer)
+		i, err := strconv.Atoi(t.Value)
+		if err != nil {
+			fmt.Printf("Corrupted data [%s]: %s\n", t.Value, err)
+			return nil
+		}
+
+		err = binary.Write(buf, binary.BigEndian, new(big.Int).SetInt64(int64(i)).Bytes())
+		if err != nil {
+			fmt.Printf("Corrupted data [%s]: %s\n", buf.String(), err)
+			return nil
+		}
+		return buf.Bytes()
+	}
+
+	if t.Type == StringType {
+		return MemoryCell(t.Value)
+	}
+
+	if t.Type == BooleanType {
+		if t.Value == "true" {
+			return []byte{1}
+		}
+
+		return []byte{0}
+	}
+
+	return nil
+}
+
+var (
+	trueToken  = Token{Type: BooleanType, Value: "true"}
+	falseToken = Token{Type: BooleanType, Value: "false"}
+    
+	trueMemoryCell  = literalToMemoryCell(&trueToken)
+	falseMemoryCell = literalToMemoryCell(&falseToken)
+	nullMemoryCell  = literalToMemoryCell(&Token{Type: NullType})
+)
 
 type dbtable struct {
     columns     []string

@@ -48,6 +48,8 @@ const (
 	IdentifierType
 	StringType
 	NumericType
+	BooleanType
+	NullType
 )
 
 func (t *Token) Equals(other *Token) bool {
