@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"dibbi/data_structures"
+	"dibbi/dibbi_kv"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -19,7 +19,7 @@ func main() {
 
 func startReplHTable() {
 	reader := bufio.NewReader(os.Stdin)
-	hTable := data_structures.NewSized(3)
+	cluster := dibbi_kv.NewSized(5)
 	fmt.Println("HTable repl started.")
 	for {
 		fmt.Print("# ")
@@ -30,19 +30,21 @@ func startReplHTable() {
 		}
 
 		text = strings.Replace(text, "\n", "", -1)
-		processInput(text, *hTable)
+		processInput(text, *cluster)
 	}
 }
 
-func processInput(input string, htable data_structures.HashTable) {
+func processInput(input string, cluster dibbi_kv.DibbiKvCluster) {
 	inputs := strings.Split(input, " ")
 	switch inputs[0] {
 	case "get":
-		if r, ok := htable.Get(inputs[1]); ok {
+		if r, ok := cluster.Get(inputs[1]); ok {
 			fmt.Printf("GET: %v\n", r)
 		}
 	case "set":
-		htable.Set(inputs[1], inputs[2])
+		cluster.Set(inputs[1], inputs[2])
+	case "rem":
+		cluster.Remove(inputs[1])
 	}
 }
 

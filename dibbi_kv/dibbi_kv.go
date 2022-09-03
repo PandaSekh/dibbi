@@ -1,56 +1,65 @@
 package dibbi_kv
 
-import "dibbi/data_structures"
+import (
+	"dibbi/data_structures"
+	"fmt"
+	"sync"
+)
 
 // DibbiKv is a key-value database
-type DibbiKv[V interface{}] struct {
-	table map[string]V
-}
-
-type DibbiKvHash struct {
+type DibbiKv struct {
 	table data_structures.HashTable
+	mu    sync.Mutex
 }
 
-func NewDibbiKv[T interface{}]() *DibbiKv[T] {
-	c := DibbiKv[T]{}
-	c.table = make(map[string]T)
-
-	return &c
+func (d *DibbiKv) String() string {
+	return fmt.Sprintf("%v", d.table)
 }
 
-func NewDibbiKvHashTable() *DibbiKvHash {
-	c := DibbiKvHash{}
+func NewDibbiKv() *DibbiKv {
+	c := DibbiKv{}
 	c.table = *data_structures.NewSized(4000)
 
 	return &c
 }
 
-func (d *DibbiKv[V]) Get(key string) (V, bool) {
-	v, found := d.table[key]
-	return v, found
-}
-
-func (d *DibbiKvHash) HGet(key string) (interface{}, bool) {
+func (d *DibbiKv) GetAsync(key string, c chan interface{}) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	v, found := d.table.Get(key)
+
+	if !found {
+		close(c)
+	} else {
+		c <- v
+	}
+}
+
+func (d *DibbiKv) Get(key string) (interface{}, bool) {
+	d.mu.Lock()
+	v, found := d.table.Get(key)
+	d.mu.Unlock()
+
 	return v, found
 }
 
-func (d *DibbiKv[V]) Contains(key string) bool {
-	_, found := d.table[key]
+func (d *DibbiKv) Contains(key string) bool {
+	_, found := d.Get(key)
 	return found
 }
 
-func (d *DibbiKv[V]) Set(key string, value V) bool {
-	d.table[key] = value
-	return true
-}
-
-func (d *DibbiKvHash) HSet(key string, value interface{}) bool {
+func (d *DibbiKv) Set(key string, value interface{}) bool {
+	d.mu.Lock()
 	d.table.Set(key, value)
+	d.mu.Unlock()
+
 	return true
 }
 
-func (d *DibbiKv[V]) Remove(key string) bool {
-	delete(d.table, key)
-	return true
+func (d *DibbiKv) Remove(key string) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	res := d.table.Remove(key)
+
+	return res
 }

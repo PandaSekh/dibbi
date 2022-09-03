@@ -6,12 +6,12 @@ const (
 	fnvPrime              = 1099511628211
 )
 
-func fnvHash(key string) int {
+func FnvHash(key string) uint64 {
 	hash := fnvOffsetBasis
 	sBytes := []byte(key)
 	for _, b := range sBytes {
 		hash = hash ^ uint64(b)
 		hash = hash * fnvPrime
 	}
-	return int(hash)
+	return hash
 }

@@ -22,7 +22,7 @@ func TestDibbiKv_Contains(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := NewDibbiKv[string]()
+			d := NewDibbiKv()
 			d.Set(tt.args.key, tt.args.value)
 			if got := d.Contains(tt.args.key); got != tt.want {
 				t.Errorf("Contains() = %v, want %v", got, tt.want)
@@ -122,20 +122,35 @@ func TestDibbiKv_Contains(t *testing.T) {
 /// Benchmarks
 ///////////////////////////
 func BenchmarkSetString(b *testing.B) {
-	kv := NewDibbiKv[int]()
+	kv := NewDibbiKv()
+	for i := 0; i < b.N; i++ {
+		kv.Set(string(rune(i)), string(rune(i)))
+	}
+}
+
+func BenchmarkSetInt(b *testing.B) {
+	kv := NewDibbiKv()
 	for i := 0; i < b.N; i++ {
 		kv.Set(string(rune(i)), i)
 	}
 }
-func BenchmarkSetStringHashTable(b *testing.B) {
-	kv := NewDibbiKvHashTable()
+
+func BenchmarkGetString(b *testing.B) {
+	kv := NewDibbiKv()
+	// insert 1mln values
+	for i := 0; i < 1_000_000; i++ {
+		kv.Set(string(rune(i)), string(rune(i)))
+	}
+
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
-		kv.HSet(string(rune(i)), i)
+		kv.Get(string(rune(i)))
 	}
 }
 
-func BenchmarkGetString(b *testing.B) {
-	kv := NewDibbiKv[int]()
+func BenchmarkGetInt(b *testing.B) {
+	kv := NewDibbiKv()
 	// insert 1mln values
 	for i := 0; i < 1_000_000; i++ {
 		kv.Set(string(rune(i)), i)
@@ -148,16 +163,25 @@ func BenchmarkGetString(b *testing.B) {
 	}
 }
 
-func BenchmarkGetStringHashTable(b *testing.B) {
-	kv := NewDibbiKvHashTable()
+func BenchmarkGetObject(b *testing.B) {
+	kv := NewDibbiKv()
+	type obj struct {
+		val   int
+		key   int
+		other int
+	}
 	// insert 1mln values
 	for i := 0; i < 1_000_000; i++ {
-		kv.HSet(string(rune(i)), i)
+		kv.Set(string(rune(i)), obj{
+			val:   i,
+			key:   i,
+			other: i,
+		})
 	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		kv.HGet(string(rune(i)))
+		kv.Get(string(rune(i)))
 	}
 }

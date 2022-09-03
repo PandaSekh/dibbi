@@ -14,6 +14,10 @@ type HashTable struct {
 	buckets [][]HashTableEntry
 }
 
+func (ht *HashTable) String() string {
+	return fmt.Sprintf("Size: %d, Buckets: %v", ht.size, ht.buckets)
+}
+
 type HashTableEntry struct {
 	key   string
 	value interface{}
@@ -34,7 +38,7 @@ func New() *HashTable {
 
 // hashKey returns the hash of the provided StringKey capped by limit.
 func hashKey(key string, limit int) int {
-	return fnvHash(key) % limit
+	return int(FnvHash(key) % uint64(limit))
 }
 
 // loadFactor returns the current loadFactor of the table
@@ -70,9 +74,24 @@ func (ht *HashTable) Set(key string, value interface{}) {
 	if ht.loadFactor() > loadFactorThreshold {
 		err := ht.expandTable()
 		if err != nil {
-			fmt.Printf("err")
+			fmt.Printf("Error while setting key: %s value: %v. Error: %v", key, value, err)
 		}
 	}
+}
+
+func (ht *HashTable) Remove(key string) bool {
+	hash := hashKey(key, len(ht.buckets))
+
+	for index, value := range ht.buckets[hash] {
+		if value.key == key {
+			ret := make([]HashTableEntry, 0)
+			ret = append(ret, ht.buckets[hash][:index]...)
+			ht.buckets[hash] = ret
+			ht.size -= 1
+			return true
+		}
+	}
+	return false
 }
 
 func (ht *HashTable) expandTable() error {
