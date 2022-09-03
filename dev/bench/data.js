@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661881249078,
+  "lastUpdate": 1662221653924,
   "repoUrl": "https://github.com/PandaSekh/dibbi",
   "entries": {
     "Go Benchmark": [
@@ -112,6 +112,42 @@ window.BENCHMARK_DATA = {
             "value": 65547,
             "unit": "ns/op",
             "extra": "17128 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alessiofranceschi2@gmail.com",
+            "name": "Alessio Franceschi",
+            "username": "PandaSekh"
+          },
+          "committer": {
+            "email": "alessiofranceschi2@gmail.com",
+            "name": "Alessio Franceschi",
+            "username": "PandaSekh"
+          },
+          "distinct": true,
+          "id": "e6adc5243dc6ade2f622d53ea75860d14db1b810",
+          "message": "clustering and async get\n\nSigned-off-by: Alessio Franceschi <alessiofranceschi2@gmail.com>",
+          "timestamp": "2022-09-03T18:13:36+02:00",
+          "tree_id": "d6d8d049262fd6418babe928a15fe28b6a01bf88",
+          "url": "https://github.com/PandaSekh/dibbi/commit/e6adc5243dc6ade2f622d53ea75860d14db1b810"
+        },
+        "date": 1662221651500,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLex/input_length_49",
+            "value": 25587,
+            "unit": "ns/op",
+            "extra": "46070 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkLex/input_length_136",
+            "value": 81250,
+            "unit": "ns/op",
+            "extra": "14899 times\n2 procs"
           }
         ]
       }
