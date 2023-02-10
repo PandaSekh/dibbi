@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1676052126877,
+  "lastUpdate": 1676052266589,
   "repoUrl": "https://github.com/PandaSekh/dibbi",
   "entries": {
     "internals benchmarks": [
@@ -72,6 +72,42 @@ window.BENCHMARK_DATA = {
             "value": 58433,
             "unit": "ns/op",
             "extra": "20574 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alessiofranceschi2@gmail.com",
+            "name": "Alessio Franceschi",
+            "username": "PandaSekh"
+          },
+          "committer": {
+            "email": "alessiofranceschi2@gmail.com",
+            "name": "Alessio Franceschi",
+            "username": "PandaSekh"
+          },
+          "distinct": true,
+          "id": "c2e409b5e544f3a31cb6b5bf1414cab4587292c7",
+          "message": "Merge tag '0.0.1' into develop\n\nTagging version 0.0.1 0.0.1",
+          "timestamp": "2023-02-10T19:02:03+01:00",
+          "tree_id": "e29c318cb98b3ece10ad1abbdaaae61aa7a7d430",
+          "url": "https://github.com/PandaSekh/dibbi/commit/c2e409b5e544f3a31cb6b5bf1414cab4587292c7"
+        },
+        "date": 1676052265865,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLex/input_length_49",
+            "value": 19322,
+            "unit": "ns/op",
+            "extra": "61528 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkLex/input_length_136",
+            "value": 58476,
+            "unit": "ns/op",
+            "extra": "20424 times\n2 procs"
           }
         ]
       }
