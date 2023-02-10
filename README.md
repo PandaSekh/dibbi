@@ -55,7 +55,7 @@ from users;
   - int
   - text
 - INSERT
-- `SELECT *` to get all columns
+- `SELECT *` to get all Columns
 - Automatic migrations on startup
 
 ## TODO

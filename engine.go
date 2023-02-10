@@ -1,7 +1,8 @@
-package internal
+package dibbi
 
 import "errors"
 
+// ColumnType defines the available column types
 type ColumnType uint
 
 const (
@@ -20,7 +21,7 @@ type Cell interface {
 	AsBool() bool
 }
 
-type Results struct {
+type QueryResults struct {
 	Columns []struct {
 		Type ColumnType
 		Name string
@@ -30,14 +31,14 @@ type Results struct {
 
 var (
 	ErrTableDoesNotExist  = errors.New("table does not exist")
-	ErrColumnDoesNotExist = errors.New("column does not exist")
+	ErrcolumnDoesNotExist = errors.New("column does not exist")
 	ErrInvalidSelectItem  = errors.New("select item is not valid")
 	ErrInvalidDatatype    = errors.New("invalid datatype")
 	ErrMissingValues      = errors.New("missing values")
 )
 
-type Engine interface {
-	CreateTable(*CreateTableStatement) error
+type Database interface {
+	CreateTable(*createTableStatement) error
 	Insert(*InsertStatement) error
-	Select(*SelectStatement) (*Results, error)
+	Select(*selectStatement) (*QueryResults, error)
 }

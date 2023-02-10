@@ -1,4 +1,4 @@
-package internal
+package dibbi
 
 import (
 	"bytes"
@@ -41,13 +41,13 @@ func (mc MemoryCell) equals(b MemoryCell) bool {
 	return bytes.Equal(mc, b)
 }
 
-// literalToMemoryCell maps a Go value into a memory cell
-func literalToMemoryCell(t *Token) MemoryCell {
-	if t.Type == NumericType {
+// literalToMemoryCell maps a Go value into a memory Cell
+func literalToMemoryCell(t *token) MemoryCell {
+	if t.tokenType == NumericType {
 		buf := new(bytes.Buffer)
-		i, err := strconv.Atoi(t.Value)
+		i, err := strconv.Atoi(t.value)
 		if err != nil {
-			fmt.Printf("Corrupted data [%s]: %s\n", t.Value, err)
+			fmt.Printf("Corrupted data [%s]: %s\n", t.value, err)
 			return nil
 		}
 
@@ -59,12 +59,14 @@ func literalToMemoryCell(t *Token) MemoryCell {
 		return buf.Bytes()
 	}
 
-	if t.Type == StringType {
-		return MemoryCell(t.Value)
+	if t.
+		tokenType == StringType {
+		return MemoryCell(t.value)
 	}
 
-	if t.Type == BooleanType {
-		if t.Value == "true" {
+	if t.
+		tokenType == BooleanType {
+		if t.value == "true" {
 			return []byte{1}
 		}
 
@@ -75,34 +77,35 @@ func literalToMemoryCell(t *Token) MemoryCell {
 }
 
 type dbTable struct {
-	columns     []string
+	Columns     []string
 	columnTypes []ColumnType
 	rows        [][]MemoryCell
 }
 
-type MemoryBackend struct {
+type memoryBackend struct {
 	tables map[string]*dbTable
 }
 
-func NewMemoryBackend() *MemoryBackend {
-	return &MemoryBackend{
+func newMemoryBackend() *memoryBackend {
+	fmt.Println("called new memory backend")
+	return &memoryBackend{
 		tables: map[string]*dbTable{},
 	}
 }
 
-func (mb *MemoryBackend) CreateTable(crt *CreateTableStatement) error {
+func (mb *memoryBackend) CreateTable(crt *createTableStatement) error {
 	t := dbTable{}
-	mb.tables[crt.Name.Value] = &t
+	mb.tables[crt.Name.value] = &t
 	if crt.Columns == nil {
 
 		return nil
 	}
 
 	for _, col := range *crt.Columns {
-		t.columns = append(t.columns, col.Name.Value)
+		t.Columns = append(t.Columns, col.Name.value)
 
 		var dt ColumnType
-		switch col.Datatype.Value {
+		switch col.Datatype.value {
 		case "int":
 			dt = IntType
 		case "text":
@@ -119,8 +122,8 @@ func (mb *MemoryBackend) CreateTable(crt *CreateTableStatement) error {
 	return nil
 }
 
-func (mb *MemoryBackend) Insert(inst *InsertStatement) error {
-	table, ok := mb.tables[inst.Table.Value]
+func (mb *memoryBackend) Insert(inst *InsertStatement) error {
+	table, ok := mb.tables[inst.Table.value]
 	if !ok {
 		return ErrTableDoesNotExist
 	}
@@ -131,7 +134,7 @@ func (mb *MemoryBackend) Insert(inst *InsertStatement) error {
 
 	var row []MemoryCell
 
-	if len(*inst.Values) != len(table.columns) {
+	if len(*inst.Values) != len(table.Columns) {
 		return ErrMissingValues
 	}
 
@@ -148,10 +151,11 @@ func (mb *MemoryBackend) Insert(inst *InsertStatement) error {
 	return nil
 }
 
-func (mb *MemoryBackend) tokenToCell(t *Token) MemoryCell {
-	if t.Type == NumericType {
+func (mb *memoryBackend) tokenToCell(t *token) MemoryCell {
+	if t.
+		tokenType == NumericType {
 		buf := new(bytes.Buffer)
-		i, err := strconv.Atoi(t.Value)
+		i, err := strconv.Atoi(t.value)
 		if err != nil {
 			panic(err)
 		}
@@ -163,25 +167,27 @@ func (mb *MemoryBackend) tokenToCell(t *Token) MemoryCell {
 		return buf.Bytes()
 	}
 
-	if t.Type == StringType {
-		return MemoryCell(t.Value)
+	if t.
+		tokenType == StringType {
+		return MemoryCell(t.value)
 	}
 
-	if t.Type == BooleanType {
+	if t.
+		tokenType == BooleanType {
 		return literalToMemoryCell(t)
 	}
 
 	return nil
 }
 
-func (mb *MemoryBackend) Select(selectStatement *SelectStatement) (*Results, error) {
-	table, ok := mb.tables[selectStatement.From.Value]
+func (mb *memoryBackend) Select(selectStatement *selectStatement) (*QueryResults, error) {
+	table, ok := mb.tables[selectStatement.from.value]
 	if !ok {
 		return nil, ErrTableDoesNotExist
 	}
 
 	var results [][]Cell
-	var columns []struct {
+	var Columns []struct {
 		Type ColumnType
 		Name string
 	}
@@ -190,7 +196,7 @@ func (mb *MemoryBackend) Select(selectStatement *SelectStatement) (*Results, err
 		var result []Cell
 		isFirstRow := i == 0
 
-		for _, exp := range selectStatement.Items {
+		for _, exp := range selectStatement.items {
 			if exp.ExpressionType != LiteralType {
 				// Unsupported, doesn't currently exist, ignore.
 				fmt.Println("Skipping non-literal expression.")
@@ -203,17 +209,18 @@ func (mb *MemoryBackend) Select(selectStatement *SelectStatement) (*Results, err
 				return selectStar(table)
 			}
 
-			if lit.Type == IdentifierType {
+			if lit.
+				tokenType == IdentifierType {
 				found := false
-				for i, tableCol := range table.columns {
-					if tableCol == lit.Value {
+				for i, tableCol := range table.Columns {
+					if tableCol == lit.value {
 						if isFirstRow {
-							columns = append(columns, struct {
+							Columns = append(Columns, struct {
 								Type ColumnType
 								Name string
 							}{
 								Type: table.columnTypes[i],
-								Name: table.columns[i],
+								Name: table.Columns[i],
 							})
 						}
 
@@ -224,31 +231,32 @@ func (mb *MemoryBackend) Select(selectStatement *SelectStatement) (*Results, err
 				}
 
 				if !found {
-					return nil, ErrColumnDoesNotExist
+					return nil, ErrcolumnDoesNotExist
 				}
 
 				continue
 			}
 
-			return nil, ErrColumnDoesNotExist
+			return nil, ErrcolumnDoesNotExist
 		}
 
 		results = append(results, result)
 	}
 
-	return &Results{
-		Columns: columns,
+	return &QueryResults{
+		Columns: Columns,
 		Rows:    results,
 	}, nil
 }
 
-func isSelectFromAllExpression(exp *Expression) bool {
-	return exp.Literal.Type == SymbolType && exp.Literal.Value == TokenFromSymbol(AsteriskSymbol).Value
+func isSelectFromAllExpression(exp *expression) bool {
+	return exp.Literal.
+		tokenType == SymbolType && exp.Literal.value == tokenFromSymbol(AsteriskSymbol).value
 }
 
-func selectStar(table *dbTable) (*Results, error) {
+func selectStar(table *dbTable) (*QueryResults, error) {
 	var results [][]Cell
-	var columns []struct {
+	var Columns []struct {
 		Type ColumnType
 		Name string
 	}
@@ -257,9 +265,9 @@ func selectStar(table *dbTable) (*Results, error) {
 		var result []Cell
 		isFirstRow := i == 0
 
-		for i, tableCol := range table.columns {
+		for i, tableCol := range table.Columns {
 			if isFirstRow {
-				columns = append(columns, struct {
+				Columns = append(Columns, struct {
 					Type ColumnType
 					Name string
 				}{
@@ -274,8 +282,8 @@ func selectStar(table *dbTable) (*Results, error) {
 		results = append(results, result)
 	}
 
-	return &Results{
-		Columns: columns,
+	return &QueryResults{
+		Columns: Columns,
 		Rows:    results,
 	}, nil
 }

@@ -1,4 +1,4 @@
-package internal
+package dibbi
 
 import (
 	"fmt"
@@ -84,7 +84,7 @@ func TestToken_lexFloat(t *testing.T) {
 		tok, _, ok := lexNumeric(test.value, Cursor{})
 		assert.Equal(t, test.number, ok, test.value)
 		if ok {
-			assert.Equal(t, strings.TrimSpace(test.value), tok.Value, test.value)
+			assert.Equal(t, strings.TrimSpace(test.value), tok.value, test.value)
 		}
 	}
 }
@@ -143,7 +143,7 @@ func TestToken_lexString(t *testing.T) {
 		assert.Equal(t, test.string, ok, test.value)
 		if ok {
 			test.expected = strings.TrimSpace(test.expected)
-			assert.Equal(t, test.expected[1:len(test.expected)-1], tok.Value, test.expected)
+			assert.Equal(t, test.expected[1:len(test.expected)-1], tok.value, test.expected)
 		}
 	}
 }
@@ -164,7 +164,7 @@ func TestToken_lexSymbol(t *testing.T) {
 		assert.Equal(t, test.symbol, ok, test.value)
 		if ok {
 			test.value = strings.TrimSpace(test.value)
-			assert.Equal(t, test.value, tok.Value, test.value)
+			assert.Equal(t, test.value, tok.value, test.value)
 		}
 	}
 }
@@ -233,7 +233,7 @@ func TestToken_lexIdentifier(t *testing.T) {
 		tok, _, ok := lexIdentifier(test.input, Cursor{})
 		assert.Equal(t, test.Identifier, ok, test.input)
 		if ok {
-			assert.Equal(t, test.value, tok.Value, test.input)
+			assert.Equal(t, test.value, tok.value, test.input)
 		}
 	}
 }
@@ -279,7 +279,7 @@ func TestToken_lexKeyword(t *testing.T) {
 		assert.Equal(t, test.keyword, ok, test.value)
 		if ok {
 			test.value = strings.TrimSpace(test.value)
-			assert.Equal(t, strings.ToLower(test.value), tok.Value, test.value)
+			assert.Equal(t, strings.ToLower(test.value), tok.value, test.value)
 		}
 	}
 }
@@ -287,219 +287,219 @@ func TestToken_lexKeyword(t *testing.T) {
 func TestLex(t *testing.T) {
 	tests := []struct {
 		input  string
-		Tokens []Token
+		Tokens []token
 		err    error
 	}{
 		{
 			input: "select a",
-			Tokens: []Token{
+			Tokens: []token{
 				{
-					Location: Location{Column: 0, Line: 0},
-					Value:    string(SelectKeyword),
-					Type:     KeywordType,
+					location:  location{column: 0, line: 0},
+					value:     string(SelectKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 7, Line: 0},
-					Value:    "a",
-					Type:     IdentifierType,
+					location:  location{column: 7, line: 0},
+					value:     "a",
+					tokenType: IdentifierType,
 				},
 			},
 		},
 		{
 			input: "select 1",
-			Tokens: []Token{
+			Tokens: []token{
 				{
-					Location: Location{Column: 0, Line: 0},
-					Value:    string(SelectKeyword),
-					Type:     KeywordType,
+					location:  location{column: 0, line: 0},
+					value:     string(SelectKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 7, Line: 0},
-					Value:    "1",
-					Type:     NumericType,
+					location:  location{column: 7, line: 0},
+					value:     "1",
+					tokenType: NumericType,
 				},
 			},
 			err: nil,
 		},
 		{
 			input: "CREATE TABLE u (id INT, name TEXT)",
-			Tokens: []Token{
+			Tokens: []token{
 				{
-					Location: Location{Column: 0, Line: 0},
-					Value:    string(CreateKeyword),
-					Type:     KeywordType,
+					location:  location{column: 0, line: 0},
+					value:     string(CreateKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 7, Line: 0},
-					Value:    string(TableKeyword),
-					Type:     KeywordType,
+					location:  location{column: 7, line: 0},
+					value:     string(TableKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 13, Line: 0},
-					Value:    "u",
-					Type:     IdentifierType,
+					location:  location{column: 13, line: 0},
+					value:     "u",
+					tokenType: IdentifierType,
 				},
 				{
-					Location: Location{Column: 15, Line: 0},
-					Value:    "(",
-					Type:     SymbolType,
+					location:  location{column: 15, line: 0},
+					value:     "(",
+					tokenType: SymbolType,
 				},
 				{
-					Location: Location{Column: 16, Line: 0},
-					Value:    "id",
-					Type:     IdentifierType,
+					location:  location{column: 16, line: 0},
+					value:     "id",
+					tokenType: IdentifierType,
 				},
 				{
-					Location: Location{Column: 19, Line: 0},
-					Value:    "int",
-					Type:     KeywordType,
+					location:  location{column: 19, line: 0},
+					value:     "int",
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 22, Line: 0},
-					Value:    ",",
-					Type:     SymbolType,
+					location:  location{column: 22, line: 0},
+					value:     ",",
+					tokenType: SymbolType,
 				},
 				{
-					Location: Location{Column: 24, Line: 0},
-					Value:    "name",
-					Type:     IdentifierType,
+					location:  location{column: 24, line: 0},
+					value:     "name",
+					tokenType: IdentifierType,
 				},
 				{
-					Location: Location{Column: 29, Line: 0},
-					Value:    "text",
-					Type:     KeywordType,
+					location:  location{column: 29, line: 0},
+					value:     "text",
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 33, Line: 0},
-					Value:    ")",
-					Type:     SymbolType,
+					location:  location{column: 33, line: 0},
+					value:     ")",
+					tokenType: SymbolType,
 				},
 			},
 		},
 		{
 			input: "insert into users Values (105, 233)",
-			Tokens: []Token{
+			Tokens: []token{
 				{
-					Location: Location{Column: 0, Line: 0},
-					Value:    string(InsertKeyword),
-					Type:     KeywordType,
+					location:  location{column: 0, line: 0},
+					value:     string(InsertKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 7, Line: 0},
-					Value:    string(IntoKeyword),
-					Type:     KeywordType,
+					location:  location{column: 7, line: 0},
+					value:     string(IntoKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 12, Line: 0},
-					Value:    "users",
-					Type:     IdentifierType,
+					location:  location{column: 12, line: 0},
+					value:     "users",
+					tokenType: IdentifierType,
 				},
 				{
-					Location: Location{Column: 18, Line: 0},
-					Value:    string(ValuesKeyword),
-					Type:     KeywordType,
+					location:  location{column: 18, line: 0},
+					value:     string(ValuesKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 25, Line: 0},
-					Value:    "(",
-					Type:     SymbolType,
+					location:  location{column: 25, line: 0},
+					value:     "(",
+					tokenType: SymbolType,
 				},
 				{
-					Location: Location{Column: 26, Line: 0},
-					Value:    "105",
-					Type:     NumericType,
+					location:  location{column: 26, line: 0},
+					value:     "105",
+					tokenType: NumericType,
 				},
 				{
-					Location: Location{Column: 30, Line: 0},
-					Value:    ",",
-					Type:     SymbolType,
+					location:  location{column: 30, line: 0},
+					value:     ",",
+					tokenType: SymbolType,
 				},
 				{
-					Location: Location{Column: 32, Line: 0},
-					Value:    "233",
-					Type:     NumericType,
+					location:  location{column: 32, line: 0},
+					value:     "233",
+					tokenType: NumericType,
 				},
 				{
-					Location: Location{Column: 36, Line: 0},
-					Value:    ")",
-					Type:     SymbolType,
+					location:  location{column: 36, line: 0},
+					value:     ")",
+					tokenType: SymbolType,
 				},
 			},
 			err: nil,
 		},
 		{
 			input: "SELECT id FROM users;",
-			Tokens: []Token{
+			Tokens: []token{
 				{
-					Location: Location{Column: 0, Line: 0},
-					Value:    string(SelectKeyword),
-					Type:     KeywordType,
+					location:  location{column: 0, line: 0},
+					value:     string(SelectKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 7, Line: 0},
-					Value:    "id",
-					Type:     IdentifierType,
+					location:  location{column: 7, line: 0},
+					value:     "id",
+					tokenType: IdentifierType,
 				},
 				{
-					Location: Location{Column: 10, Line: 0},
-					Value:    string(FromKeyword),
-					Type:     KeywordType,
+					location:  location{column: 10, line: 0},
+					value:     string(FromKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 15, Line: 0},
-					Value:    "users",
-					Type:     IdentifierType,
+					location:  location{column: 15, line: 0},
+					value:     "users",
+					tokenType: IdentifierType,
 				},
 				{
-					Location: Location{Column: 20, Line: 0},
-					Value:    ";",
-					Type:     SymbolType,
+					location:  location{column: 20, line: 0},
+					value:     ";",
+					tokenType: SymbolType,
 				},
 			},
 			err: nil,
 		},
 		{
 			input: "SELECT * FROM my_table WHERE name = 'hello_world'",
-			Tokens: []Token{
+			Tokens: []token{
 				{
-					Location: Location{Column: 0, Line: 0},
-					Value:    string(SelectKeyword),
-					Type:     KeywordType,
+					location:  location{column: 0, line: 0},
+					value:     string(SelectKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 7, Line: 0},
-					Value:    "*",
-					Type:     SymbolType,
+					location:  location{column: 7, line: 0},
+					value:     "*",
+					tokenType: SymbolType,
 				},
 				{
-					Location: Location{Column: 9, Line: 0},
-					Value:    string(FromKeyword),
-					Type:     KeywordType,
+					location:  location{column: 9, line: 0},
+					value:     string(FromKeyword),
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 14, Line: 0},
-					Value:    "my_table",
-					Type:     IdentifierType,
+					location:  location{column: 14, line: 0},
+					value:     "my_table",
+					tokenType: IdentifierType,
 				},
 				{
-					Location: Location{Column: 23, Line: 0},
-					Value:    "where",
-					Type:     KeywordType,
+					location:  location{column: 23, line: 0},
+					value:     "where",
+					tokenType: KeywordType,
 				},
 				{
-					Location: Location{Column: 29, Line: 0},
-					Value:    "name",
-					Type:     IdentifierType,
+					location:  location{column: 29, line: 0},
+					value:     "name",
+					tokenType: IdentifierType,
 				},
 				{
-					Location: Location{Column: 34, Line: 0},
-					Value:    "=",
-					Type:     SymbolType,
+					location:  location{column: 34, line: 0},
+					value:     "=",
+					tokenType: SymbolType,
 				},
 				{
-					Location: Location{Column: 36, Line: 0},
-					Value:    "hello_world",
-					Type:     StringType,
+					location:  location{column: 36, line: 0},
+					value:     "hello_world",
+					tokenType: StringType,
 				},
 			},
 			err: nil,

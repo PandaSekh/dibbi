@@ -1,50 +1,50 @@
-package internal
+package dibbi
 
 import (
 	"fmt"
 	"strings"
 )
 
-type Location struct {
-	Line   uint
-	Column uint
+type location struct {
+	line   uint
+	column uint
 }
-type Keyword string
-type Symbol string
-type TokenType uint
-type Token struct {
-	Value    string
-	Type     TokenType
-	Location Location
+type keyword string
+type symbol string
+type tokenType uint
+type token struct {
+	value     string
+	tokenType tokenType
+	location  location
 }
 type Cursor struct {
 	Pointer  uint
-	Location Location
+	location location
 }
-type lexer func(string, Cursor) (*Token, Cursor, bool)
+type lexer func(string, Cursor) (*token, Cursor, bool)
 
 const (
-	SelectKeyword Keyword = "select"
-	FromKeyword   Keyword = "from"
-	AsKeyword     Keyword = "as"
-	TableKeyword  Keyword = "table"
-	CreateKeyword Keyword = "create"
-	InsertKeyword Keyword = "insert"
-	IntoKeyword   Keyword = "into"
-	ValuesKeyword Keyword = "values"
-	IntKeyword    Keyword = "int"
-	TextKeyword   Keyword = "text"
-	BoolKeyword   Keyword = "bool"
-	WhereKeyword  Keyword = "where"
+	SelectKeyword keyword = "select"
+	FromKeyword   keyword = "from"
+	AsKeyword     keyword = "as"
+	TableKeyword  keyword = "table"
+	CreateKeyword keyword = "create"
+	InsertKeyword keyword = "insert"
+	IntoKeyword   keyword = "into"
+	ValuesKeyword keyword = "values"
+	IntKeyword    keyword = "int"
+	TextKeyword   keyword = "text"
+	BoolKeyword   keyword = "bool"
+	WhereKeyword  keyword = "where"
 
-	SemicolonSymbol        Symbol = ";"
-	AsteriskSymbol         Symbol = "*"
-	CommaSymbol            Symbol = ","
-	LeftParenthesesSymbol  Symbol = "("
-	RightParenthesesSymbol Symbol = ")"
-	EqualsSymbol           Symbol = "="
+	SemicolonSymbol        symbol = ";"
+	AsteriskSymbol         symbol = "*"
+	CommaSymbol            symbol = ","
+	LeftParenthesesSymbol  symbol = "("
+	RightParenthesesSymbol symbol = ")"
+	EqualsSymbol           symbol = "="
 
-	KeywordType TokenType = iota
+	KeywordType tokenType = iota
 	SymbolType
 	IdentifierType
 	StringType
@@ -53,24 +53,24 @@ const (
 	NullType
 )
 
-func (t *Token) Equals(other *Token) bool {
-	return t.Value == other.Value && t.Type == other.Type
+func (t *token) Equals(other *token) bool {
+	return t.value == other.value && t.tokenType == other.tokenType
 }
 
-func Lex(source string) ([]*Token, error) {
-	var tokens []*Token
+func Lex(source string) ([]*token, error) {
+	var tokens []*token
 	cur := Cursor{}
 	lexers := []lexer{lexKeyword, lexSymbol, lexString, lexNumeric, lexIdentifier, lexBool}
 
 lex:
 	for cur.Pointer < uint(len(source)) {
-		// Try to parse Token with lexers defined above
+		// Try to parse token with lexers defined above
 		for _, lex := range lexers {
-			if Token, newCursor, success := lex(source, cur); success {
-				// One lexer was successful, update Cursor and append Token
+			if token, newCursor, success := lex(source, cur); success {
+				// One lexer was successful, update Cursor and append token
 				cur = newCursor
-				if Token != nil {
-					tokens = append(tokens, Token)
+				if token != nil {
+					tokens = append(tokens, token)
 				}
 
 				continue lex
@@ -80,9 +80,9 @@ lex:
 		// No lexer was able to perform lexing. Return error
 		hint := ""
 		if len(tokens) > 0 {
-			hint = " after " + tokens[len(tokens)-1].Value
+			hint = " after " + tokens[len(tokens)-1].value
 		}
-		return nil, fmt.Errorf("unable to lex Token%s, at %d:%d", hint, cur.Location.Line, cur.Location.Column)
+		return nil, fmt.Errorf("unable to lex token%s, at %d:%d", hint, cur.location.line, cur.location.column)
 	}
 
 	return tokens, nil
@@ -93,7 +93,7 @@ lex:
 ////////////////////////////////
 
 // Finds numeric tokens
-func lexNumeric(source string, initialCursor Cursor) (*Token, Cursor, bool) {
+func lexNumeric(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	finalCursor := initialCursor
 
 	periodAlreadyFound := false
@@ -101,7 +101,7 @@ func lexNumeric(source string, initialCursor Cursor) (*Token, Cursor, bool) {
 
 	for ; finalCursor.Pointer < uint(len(source)); finalCursor.Pointer++ {
 		char := source[finalCursor.Pointer]
-		finalCursor.Location.Column++
+		finalCursor.location.column++
 
 		isDigit := char >= '0' && char <= '9'
 		isPeriod := char == '.'
@@ -138,7 +138,7 @@ func lexNumeric(source string, initialCursor Cursor) (*Token, Cursor, bool) {
 			nextChar := source[finalCursor.Pointer+1]
 			if nextChar == '-' || nextChar == '+' {
 				finalCursor.Pointer++
-				finalCursor.Location.Column++
+				finalCursor.location.column++
 			}
 		} else if !isDigit {
 			break
@@ -150,25 +150,25 @@ func lexNumeric(source string, initialCursor Cursor) (*Token, Cursor, bool) {
 		return nil, initialCursor, false
 	}
 
-	return &Token{
-		Value:    source[initialCursor.Pointer:finalCursor.Pointer],
-		Location: initialCursor.Location,
-		Type:     NumericType,
+	return &token{
+		value:     source[initialCursor.Pointer:finalCursor.Pointer],
+		location:  initialCursor.location,
+		tokenType: NumericType,
 	}, finalCursor, true
 }
 
 // Lex a string delimited by '
-func lexString(source string, initialCursor Cursor) (*Token, Cursor, bool) {
+func lexString(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	return lexCharacterDelimited(source, initialCursor, '\'')
 }
 
 // Lex a boolean
-func lexBool(source string, initialCursor Cursor) (*Token, Cursor, bool) {
+func lexBool(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	finalCursor := initialCursor
 
 	for ; finalCursor.Pointer < uint(len(source)); finalCursor.Pointer++ {
 		char := source[finalCursor.Pointer]
-		finalCursor.Location.Column++
+		finalCursor.location.column++
 
 		// todo refactor
 		isLetterOfInterest := char == 't' || char == 'r' || char == 'u' || char == 'e' || char == 'f' || char == 'a' || char == 'l' || char == 's'
@@ -188,25 +188,25 @@ func lexBool(source string, initialCursor Cursor) (*Token, Cursor, bool) {
 		return nil, initialCursor, false
 	}
 
-	return &Token{
-		Value:    source[initialCursor.Pointer:finalCursor.Pointer],
-		Location: initialCursor.Location,
-		Type:     BooleanType,
+	return &token{
+		value:     source[initialCursor.Pointer:finalCursor.Pointer],
+		location:  initialCursor.location,
+		tokenType: BooleanType,
 	}, finalCursor, true
 }
 
-func lexSymbol(source string, initialCursor Cursor) (*Token, Cursor, bool) {
+func lexSymbol(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	char := source[initialCursor.Pointer]
 	finalCursor := initialCursor
 
 	finalCursor.Pointer++
-	finalCursor.Location.Column++
+	finalCursor.location.column++
 
 	// symbols to be ignored
 	switch char {
 	case '\n':
-		finalCursor.Location.Line++
-		finalCursor.Location.Column = 0
+		finalCursor.location.line++
+		finalCursor.location.column = 0
 		fallthrough
 	case '\t':
 		fallthrough
@@ -214,11 +214,11 @@ func lexSymbol(source string, initialCursor Cursor) (*Token, Cursor, bool) {
 		return nil, finalCursor, true
 	}
 
-	symbols := []Symbol{CommaSymbol, LeftParenthesesSymbol, RightParenthesesSymbol, SemicolonSymbol, AsteriskSymbol, EqualsSymbol}
+	symbols := []symbol{CommaSymbol, LeftParenthesesSymbol, RightParenthesesSymbol, SemicolonSymbol, AsteriskSymbol, EqualsSymbol}
 	var options []string
 
-	for _, Symbol := range symbols {
-		options = append(options, string(Symbol))
+	for _, symbol := range symbols {
+		options = append(options, string(symbol))
 	}
 
 	match := findLongestStringMatch(source, initialCursor, options)
@@ -227,18 +227,18 @@ func lexSymbol(source string, initialCursor Cursor) (*Token, Cursor, bool) {
 	}
 
 	finalCursor.Pointer = initialCursor.Pointer + uint(len(match))
-	finalCursor.Location.Column = initialCursor.Location.Column + uint(len(match))
+	finalCursor.location.column = initialCursor.location.column + uint(len(match))
 
-	return &Token{
-		Value:    match,
-		Location: initialCursor.Location,
-		Type:     SymbolType,
+	return &token{
+		value:     match,
+		location:  initialCursor.location,
+		tokenType: SymbolType,
 	}, finalCursor, true
 }
 
-func lexKeyword(source string, initialCursor Cursor) (*Token, Cursor, bool) {
+func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	finalCursor := initialCursor
-	keywords := []Keyword{
+	keywords := []keyword{
 		SelectKeyword,
 		InsertKeyword,
 		ValuesKeyword,
@@ -254,8 +254,8 @@ func lexKeyword(source string, initialCursor Cursor) (*Token, Cursor, bool) {
 	}
 
 	var options []string
-	for _, Keyword := range keywords {
-		options = append(options, string(Keyword))
+	for _, keyword := range keywords {
+		options = append(options, string(keyword))
 	}
 
 	match := findLongestStringMatch(source, initialCursor, options)
@@ -264,19 +264,19 @@ func lexKeyword(source string, initialCursor Cursor) (*Token, Cursor, bool) {
 	}
 
 	finalCursor.Pointer = initialCursor.Pointer + uint(len(match))
-	finalCursor.Location.Column = initialCursor.Location.Column + uint(len(match))
+	finalCursor.location.column = initialCursor.location.column + uint(len(match))
 
-	return &Token{
-		Value:    match,
-		Location: initialCursor.Location,
-		Type:     KeywordType,
+	return &token{
+		value:     match,
+		location:  initialCursor.location,
+		tokenType: KeywordType,
 	}, finalCursor, true
 }
 
-func lexIdentifier(source string, initialCursor Cursor) (*Token, Cursor, bool) {
+func lexIdentifier(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	// Try to lex with helper function if it's a delimited identifier
-	if Token, newCursor, ok := lexCharacterDelimited(source, initialCursor, '"'); ok {
-		return Token, newCursor, true
+	if token, newCursor, ok := lexCharacterDelimited(source, initialCursor, '"'); ok {
+		return token, newCursor, true
 	}
 
 	finalCursor := initialCursor
@@ -289,29 +289,29 @@ func lexIdentifier(source string, initialCursor Cursor) (*Token, Cursor, bool) {
 	}
 
 	finalCursor.Pointer++
-	finalCursor.Location.Column++
+	finalCursor.location.column++
 
-	Value := []byte{char}
+	value := []byte{char}
 	for ; finalCursor.Pointer < uint(len(source)); finalCursor.Pointer++ {
 		char = source[finalCursor.Pointer]
 		isAlphabetical := (char >= 'A' && char <= 'Z') || (char >= 'a' && char <= 'z')
 		isNumeric := char >= '0' && char <= '9'
 		if isAlphabetical || isNumeric || char == '$' || char == '_' {
-			Value = append(Value, char)
-			finalCursor.Location.Column++
+			value = append(value, char)
+			finalCursor.location.column++
 			continue
 		}
 
 		break
 	}
 
-	if len(Value) == 0 {
+	if len(value) == 0 {
 		return nil, initialCursor, false
 	}
 
-	return &Token{
-		Value:    strings.ToLower(string(Value)),
-		Location: initialCursor.Location,
-		Type:     IdentifierType,
+	return &token{
+		value:     strings.ToLower(string(value)),
+		location:  initialCursor.location,
+		tokenType: IdentifierType,
 	}, finalCursor, true
 }
