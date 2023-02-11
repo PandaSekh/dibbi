@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1676053075438,
+  "lastUpdate": 1676132461062,
   "repoUrl": "https://github.com/PandaSekh/dibbi",
   "entries": {
     "internals benchmarks": [
@@ -180,6 +180,42 @@ window.BENCHMARK_DATA = {
             "value": 58382,
             "unit": "ns/op",
             "extra": "20566 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "alessiofranceschi2@gmail.com",
+            "name": "Alessio Franceschi",
+            "username": "PandaSekh"
+          },
+          "committer": {
+            "email": "alessiofranceschi2@gmail.com",
+            "name": "Alessio Franceschi",
+            "username": "PandaSekh"
+          },
+          "distinct": true,
+          "id": "c990335bd015839b5c547dd2fea16a1b5b8b6b42",
+          "message": "Fixed module path and refactored code\n\nSigned-off-by: Alessio Franceschi <alessiofranceschi2@gmail.com>",
+          "timestamp": "2023-02-11T17:20:32+01:00",
+          "tree_id": "57e91dbcbacb39c645e5ac7ac77300091337d6f0",
+          "url": "https://github.com/PandaSekh/dibbi/commit/c990335bd015839b5c547dd2fea16a1b5b8b6b42"
+        },
+        "date": 1676132460098,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkLex/input_length_49",
+            "value": 28527,
+            "unit": "ns/op",
+            "extra": "42057 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkLex/input_length_136",
+            "value": 88001,
+            "unit": "ns/op",
+            "extra": "13820 times\n2 procs"
           }
         ]
       }
