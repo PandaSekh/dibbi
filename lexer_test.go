@@ -4,87 +4,85 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestToken_lexFloat(t *testing.T) {
 	tests := []struct {
-		number bool
-		value  string
+		isInt bool
+		value string
 	}{
 		{
-			number: true,
-			value:  "105",
+			isInt: true,
+			value: "105",
 		},
 		{
-			number: true,
-			value:  "105 ",
+			isInt: true,
+			value: "105 ",
 		},
 		{
-			number: true,
-			value:  "123.",
+			isInt: true,
+			value: "123.",
 		},
 		{
-			number: true,
-			value:  "123.145",
+			isInt: true,
+			value: "123.145",
 		},
 		{
-			number: true,
-			value:  "1e5",
+			isInt: true,
+			value: "1e5",
 		},
 		{
-			number: true,
-			value:  "1.e21",
+			isInt: true,
+			value: "1.e21",
 		},
 		{
-			number: true,
-			value:  "1.1e2",
+			isInt: true,
+			value: "1.1e2",
 		},
 		{
-			number: true,
-			value:  "1.1e-2",
+			isInt: true,
+			value: "1.1e-2",
 		},
 		{
-			number: true,
-			value:  "1.1e+2",
+			isInt: true,
+			value: "1.1e+2",
 		},
 		{
-			number: true,
-			value:  "1e-1",
+			isInt: true,
+			value: "1e-1",
 		},
 		{
-			number: true,
-			value:  ".1",
+			isInt: true,
+			value: ".1",
 		},
 		{
-			number: true,
-			value:  "4.",
+			isInt: true,
+			value: "4.",
 		},
 		// false tests
 		{
-			number: false,
-			value:  "e4",
+			isInt: false,
+			value: "e4",
 		},
 		{
-			number: false,
-			value:  "1..",
+			isInt: false,
+			value: "1..",
 		},
 		{
-			number: false,
-			value:  "1ee4",
+			isInt: false,
+			value: "1ee4",
 		},
 		{
-			number: false,
-			value:  " 1",
+			isInt: false,
+			value: " 1",
 		},
 	}
 
 	for _, test := range tests {
 		tok, _, ok := lexNumeric(test.value, Cursor{})
-		assert.Equal(t, test.number, ok, test.value)
+		assertEqual(t, test.isInt, ok)
 		if ok {
-			assert.Equal(t, strings.TrimSpace(test.value), tok.value, test.value)
+			assertEqual(t, strings.TrimSpace(test.value), tok.value)
 		}
 	}
 }
@@ -140,10 +138,10 @@ func TestToken_lexString(t *testing.T) {
 
 	for _, test := range tests {
 		tok, _, ok := lexString(test.value, Cursor{})
-		assert.Equal(t, test.string, ok, test.value)
+		assertEqual(t, test.string, ok)
 		if ok {
 			test.expected = strings.TrimSpace(test.expected)
-			assert.Equal(t, test.expected[1:len(test.expected)-1], tok.value, test.expected)
+			assertEqual(t, test.expected[1:len(test.expected)-1], tok.value)
 		}
 	}
 }
@@ -161,10 +159,10 @@ func TestToken_lexSymbol(t *testing.T) {
 
 	for _, test := range tests {
 		tok, _, ok := lexSymbol(test.value, Cursor{})
-		assert.Equal(t, test.symbol, ok, test.value)
+		assertEqual(t, test.symbol, ok)
 		if ok {
 			test.value = strings.TrimSpace(test.value)
-			assert.Equal(t, test.value, tok.value, test.value)
+			assertEqual(t, test.value, tok.value)
 		}
 	}
 }
@@ -231,9 +229,9 @@ func TestToken_lexIdentifier(t *testing.T) {
 
 	for _, test := range tests {
 		tok, _, ok := lexIdentifier(test.input, Cursor{})
-		assert.Equal(t, test.Identifier, ok, test.input)
+		assertEqual(t, test.Identifier, ok)
 		if ok {
-			assert.Equal(t, test.value, tok.value, test.input)
+			assertEqual(t, test.value, tok.value)
 		}
 	}
 }
@@ -276,10 +274,10 @@ func TestToken_lexKeyword(t *testing.T) {
 
 	for _, test := range tests {
 		tok, _, ok := lexKeyword(test.value, Cursor{})
-		assert.Equal(t, test.keyword, ok, test.value)
+		assertEqual(t, test.keyword, ok)
 		if ok {
 			test.value = strings.TrimSpace(test.value)
-			assert.Equal(t, strings.ToLower(test.value), tok.value, test.value)
+			assertEqual(t, strings.ToLower(test.value), tok.value)
 		}
 	}
 }
@@ -508,11 +506,11 @@ func TestLex(t *testing.T) {
 
 	for _, test := range tests {
 		tokens, err := Lex(test.input)
-		assert.Equal(t, test.err, err, test.input)
-		assert.Equal(t, len(test.Tokens), len(tokens), test.input)
+		assertEqual(t, test.err, err)
+		assertEqual(t, len(test.Tokens), len(tokens))
 
 		for i, tok := range tokens {
-			assert.Equal(t, &test.Tokens[i], tok, test.input)
+			assertEqual(t, &test.Tokens[i], tok)
 		}
 	}
 }

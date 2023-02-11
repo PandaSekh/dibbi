@@ -16,17 +16,20 @@ func (ct ColumnType) String() string {
 }
 
 type Cell interface {
-	AsText() string
-	AsInt() int32
-	AsBool() bool
+	AsText() *string
+	AsInt() *int32
+	AsBool() *bool
 }
 
 type QueryResults struct {
-	Columns []struct {
-		Type ColumnType
-		Name string
-	}
-	Rows [][]Cell
+	Columns []ResultColumn
+	Rows    [][]Cell
+}
+
+type ResultColumn struct {
+	Type    ColumnType
+	Name    string
+	NotNull bool
 }
 
 var (

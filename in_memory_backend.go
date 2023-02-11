@@ -10,27 +10,33 @@ import (
 
 type MemoryCell []byte
 
-func (mc MemoryCell) AsInt() int32 {
+func (mc MemoryCell) AsInt() *int32 {
 	var i int32
 	err := binary.Read(bytes.NewBuffer(mc), binary.BigEndian, &i)
 	if err != nil {
 		fmt.Printf("Corrupted data [%s]: %s\n", mc, err)
-		return 0
+		return nil
 	}
 
-	return i
+	return &i
 }
 
-func (mc MemoryCell) AsText() string {
-	return string(mc)
-}
-
-func (mc MemoryCell) AsBool() bool {
-	b, err := strconv.ParseBool(string(mc))
-	if err != nil {
-		return false
+func (mc MemoryCell) AsText() *string {
+	if len(mc) == 0 {
+		return nil
 	}
-	return b
+
+	s := string(mc)
+	return &s
+}
+
+func (mc MemoryCell) AsBool() *bool {
+	if len(mc) == 0 {
+		return nil
+	}
+
+	b := mc[0] == 1
+	return &b
 }
 
 func (mc MemoryCell) equals(b MemoryCell) bool {
@@ -87,7 +93,7 @@ type memoryBackend struct {
 }
 
 func newMemoryBackend() *memoryBackend {
-	fmt.Println("called new memory backend")
+	fmt.Println("Created new memory backend")
 	return &memoryBackend{
 		tables: map[string]*dbTable{},
 	}
@@ -187,10 +193,7 @@ func (mb *memoryBackend) Select(selectStatement *selectStatement) (*QueryResults
 	}
 
 	var results [][]Cell
-	var Columns []struct {
-		Type ColumnType
-		Name string
-	}
+	var Columns []ResultColumn
 
 	for i, row := range table.rows {
 		var result []Cell
@@ -215,10 +218,7 @@ func (mb *memoryBackend) Select(selectStatement *selectStatement) (*QueryResults
 				for i, tableCol := range table.Columns {
 					if tableCol == lit.value {
 						if isFirstRow {
-							Columns = append(Columns, struct {
-								Type ColumnType
-								Name string
-							}{
+							Columns = append(Columns, ResultColumn{
 								Type: table.columnTypes[i],
 								Name: table.Columns[i],
 							})
@@ -256,10 +256,7 @@ func isSelectFromAllExpression(exp *expression) bool {
 
 func selectStar(table *dbTable) (*QueryResults, error) {
 	var results [][]Cell
-	var Columns []struct {
-		Type ColumnType
-		Name string
-	}
+	var Columns []ResultColumn
 
 	for i, row := range table.rows {
 		var result []Cell
@@ -267,10 +264,7 @@ func selectStar(table *dbTable) (*QueryResults, error) {
 
 		for i, tableCol := range table.Columns {
 			if isFirstRow {
-				Columns = append(Columns, struct {
-					Type ColumnType
-					Name string
-				}{
+				Columns = append(Columns, ResultColumn{
 					Type: table.columnTypes[i],
 					Name: tableCol,
 				})

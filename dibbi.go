@@ -1,3 +1,4 @@
+// Package dibbi contains functions to manipulate a dibbi instance.
 package dibbi
 
 var mb = newMemoryBackend()
