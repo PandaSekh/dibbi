@@ -53,14 +53,14 @@ repl:
 			break
 		}
 
-		result, present, queryError := dibbi.Query(line, &database)
+		result, queryError := dibbi.Query(line, &database)
 
 		if queryError != nil {
 			fmt.Println(queryError)
 			continue
 		}
 
-		if present && result != nil {
+		if result != nil {
 			printResults(result)
 			continue
 		}
