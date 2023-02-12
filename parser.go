@@ -79,7 +79,7 @@ func parseStatement(tokens []*token, initialCursor uint, delimiter token) (*stat
 	selectStmt, newCursor, ok := parseSelectStatement(tokens, cursor, delimiter)
 	if ok {
 		return &statement{
-			Type:            SelectType,
+			statementType:   SelectType,
 			selectStatement: selectStmt,
 		}, newCursor, true
 	}
@@ -88,8 +88,8 @@ func parseStatement(tokens []*token, initialCursor uint, delimiter token) (*stat
 	insertStmt, newCursor, ok := parseInsertStatement(tokens, cursor)
 	if ok {
 		return &statement{
-			Type:            InsertType,
-			InsertStatement: insertStmt,
+			statementType:   InsertType,
+			insertStatement: insertStmt,
 		}, newCursor, true
 	}
 
@@ -97,7 +97,7 @@ func parseStatement(tokens []*token, initialCursor uint, delimiter token) (*stat
 	createTableStmt, newCursor, ok := parseCreateTableStatement(tokens, cursor)
 	if ok {
 		return &statement{
-			Type:                 CreateTableType,
+			statementType:        CreateTableType,
 			createTableStatement: createTableStmt,
 		}, newCursor, true
 	}
@@ -140,7 +140,7 @@ func parseSelectStatement(tokens []*token, initialCursor uint, delimiter token) 
 
 }
 
-func parseInsertStatement(tokens []*token, initialCursor uint) (*InsertStatement, uint, bool) {
+func parseInsertStatement(tokens []*token, initialCursor uint) (*insertStatement, uint, bool) {
 	cursor := initialCursor
 
 	// Look for INSERT
@@ -192,7 +192,7 @@ func parseInsertStatement(tokens []*token, initialCursor uint) (*InsertStatement
 	}
 	cursor++
 
-	return &InsertStatement{
+	return &insertStatement{
 		Table:  *table,
 		Values: values,
 	}, cursor, true

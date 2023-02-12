@@ -67,7 +67,7 @@ type Database interface {
 	CreateTable(*createTableStatement) error
 	//DropTable(*dropTableStatement) error
 	//CreateIndex(*createIndexStatement) error
-	Insert(*InsertStatement) error
+	Insert(*insertStatement) error
 	Select(*selectStatement) (*Results, error)
 	//GetTables() []TableMetadata
 }

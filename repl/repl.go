@@ -1,42 +1,73 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/PandaSekh/dibbi"
+	"github.com/chzyer/readline"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"io"
 	"os"
 	"strconv"
 	"strings"
 )
 
 func startRepl(database dibbi.Database) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("dibbi started.")
-	for {
-		fmt.Print("# ")
-		text, err := reader.ReadString('\n')
+	l, err := readline.NewEx(&readline.Config{
+		Prompt:          "# ",
+		HistoryFile:     "/tmp/tmp",
+		InterruptPrompt: "^C",
+		EOFPrompt:       "exit",
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer func(l *readline.Instance) {
+		err := l.Close()
 		if err != nil {
 			fmt.Println(err)
-			continue
+		}
+	}(l)
+
+	fmt.Println("dibbi started.")
+
+repl:
+	for {
+		fmt.Print("# ")
+		line, err := l.Readline()
+		if err == readline.ErrInterrupt {
+			if len(line) == 0 {
+				break
+			} else {
+				continue repl
+			}
+		} else if err == io.EOF {
+			break
+		}
+		if err != nil {
+			fmt.Println("Error while reading line:", err)
+			continue repl
 		}
 
-		text = strings.Replace(text, "\n", "", -1)
-		result, present, errQuery := dibbi.Query(text, &database)
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "quit" || trimmed == "exit" || trimmed == "\\q" {
+			break
+		}
 
-		if errQuery != nil {
-			fmt.Println(err)
+		result, present, queryError := dibbi.Query(line, &database)
+
+		if queryError != nil {
+			fmt.Println(queryError)
 			continue
 		}
 
 		if present && result != nil {
-			printTable(result)
+			printResults(result)
 			continue
 		}
 	}
 }
 
-func printTable(results *dibbi.Results) {
+func printResults(results *dibbi.Results) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 

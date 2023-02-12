@@ -286,10 +286,6 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	finalCursor.location.column = initialCursor.location.column + uint(len(match))
 
 	tokenType := KeywordType
-	//if match == string(TrueKeyword) || match == string(FalseKeyword) {
-	//	tokenType = BooleanType
-	//}
-
 	if match == string(NullKeyword) {
 		tokenType = NullType
 	}

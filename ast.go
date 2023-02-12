@@ -10,38 +10,38 @@ func (a *ast) String() string {
 	return fmt.Sprintf("%v", a.Statements)
 }
 
-type astType uint
+type statementType uint
 
 const (
-	SelectType astType = iota
+	SelectType statementType = iota
 	CreateTableType
 	InsertType
 )
 
-func (at astType) String() string {
+func (at statementType) String() string {
 	return [...]string{"Select", "Create Table", "Insert"}[at]
 }
 
 type statement struct {
 	selectStatement      *selectStatement
 	createTableStatement *createTableStatement
-	InsertStatement      *InsertStatement
-	Type                 astType
+	insertStatement      *insertStatement
+	statementType        statementType
 }
 
 func (a *statement) String() string {
 	return fmt.Sprintf("Type: %v\nSelect: '%v'\nInsert: %v\n", a.
-		Type, a.selectStatement, a.InsertStatement)
+		statementType, a.selectStatement, a.insertStatement)
 }
 
 // Insert
 
-type InsertStatement struct {
+type insertStatement struct {
 	Table  token
 	Values *[]*expression
 }
 
-func (s *InsertStatement) String() string {
+func (s *insertStatement) String() string {
 	return fmt.Sprintf("Table: %v, Values: %v", s.Table.value, s.Values)
 }
 

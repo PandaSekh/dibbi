@@ -9,14 +9,14 @@ func Query(query string, db *Database) (result *Results, isResultPresent bool, e
 	}
 
 	for _, stmt := range ast.Statements {
-		switch stmt.Type {
+		switch stmt.statementType {
 		case CreateTableType:
 			err = (*db).CreateTable(ast.Statements[0].createTableStatement)
 			if err != nil {
 				return nil, false, err
 			}
 		case InsertType:
-			err = (*db).Insert(stmt.InsertStatement)
+			err = (*db).Insert(stmt.insertStatement)
 			if err != nil {
 				return nil, false, err
 			}

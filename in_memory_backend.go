@@ -86,15 +86,6 @@ func literalToMemoryCell(t *token) memoryCell {
 	return nil
 }
 
-var (
-	trueToken  = token{tokenType: BooleanType, value: "true"}
-	falseToken = token{tokenType: BooleanType, value: "false"}
-
-	trueMemoryCell  = literalToMemoryCell(&trueToken)
-	falseMemoryCell = literalToMemoryCell(&falseToken)
-	nullMemoryCell  = literalToMemoryCell(&token{tokenType: NullType})
-)
-
 type table struct {
 	name        string
 	columns     []string
@@ -142,7 +133,7 @@ func (mb *InMemoryBackend) CreateTable(crt *createTableStatement) error {
 	return nil
 }
 
-func (mb *InMemoryBackend) Insert(inst *InsertStatement) error {
+func (mb *InMemoryBackend) Insert(inst *insertStatement) error {
 	table, ok := mb.tables[inst.Table.value]
 	if !ok {
 		return ErrTableDoesNotExist
