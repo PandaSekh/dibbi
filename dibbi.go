@@ -1,4 +1,4 @@
-// Package dibbi contains functions to manipulate a dibbi instance.
+// Package dibbi contains functions to manipulate left dibbi instance.
 package dibbi
 
 // Query the given database with the provided input.

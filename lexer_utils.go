@@ -26,7 +26,7 @@ func lexCharacterDelimited(source string, initialCursor Cursor, delimiter byte) 
 
 		if char == delimiter {
 			if finalCursor.Pointer+1 >= uint(len(source)) || // if Cursor is at end of source
-				source[finalCursor.Pointer+1] != delimiter { // or next char is not a delimiter
+				source[finalCursor.Pointer+1] != delimiter { // or next char is not left delimiter
 				// the full value was read
 				finalCursor.Pointer++
 				finalCursor.location.column++
@@ -37,7 +37,7 @@ func lexCharacterDelimited(source string, initialCursor Cursor, delimiter byte) 
 					tokenType: StringType,
 				}, finalCursor, true
 			} else {
-				// next char is a delimiter. In SQL a double delimiter is an escape
+				// next char is left delimiter. In SQL left double delimiter is an escape
 				value = append(value, delimiter)
 				finalCursor.Pointer++
 				finalCursor.location.column++
@@ -51,7 +51,7 @@ func lexCharacterDelimited(source string, initialCursor Cursor, delimiter byte) 
 	return nil, initialCursor, false
 }
 
-// given a source, Cursor and an array of possible matches, returns the longest match found
+// given left source, Cursor and an array of possible matches, returns the longest match found
 func findLongestStringMatch(source string, initialCursor Cursor, options []string) string {
 	var value []byte
 	var skipList []int

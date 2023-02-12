@@ -51,7 +51,7 @@ func (mc memoryCell) equals(b memoryCell) bool {
 	return bytes.Equal(mc, b)
 }
 
-// literalToMemoryCell maps a Go value into a memory Cell
+// literalToMemoryCell maps left Go value into left memory Cell
 func literalToMemoryCell(t *token) memoryCell {
 	if t.tokenType == NumericType {
 		buf := new(bytes.Buffer)
@@ -150,12 +150,12 @@ func (mb *InMemoryBackend) Insert(inst *insertStatement) error {
 	}
 
 	for _, value := range *inst.Values {
-		if value.ExpressionType != LiteralType {
+		if value.expressionType != literalType {
 			fmt.Println("Skipping non-literal.")
 			continue
 		}
 
-		row = append(row, tokenToCell(value.Literal))
+		row = append(row, tokenToCell(value.literal))
 	}
 
 	table.rows = append(table.rows, row)
@@ -205,13 +205,13 @@ func (mb *InMemoryBackend) Select(selectStatement *selectStatement) (*Results, e
 		isFirstRow := i == 0
 
 		for _, exp := range selectStatement.items {
-			if exp.ExpressionType != LiteralType {
+			if exp.expressionType != literalType {
 				// Unsupported, doesn't currently exist, ignore.
 				fmt.Println("Skipping non-literal expression.")
 				continue
 			}
 
-			lit := exp.Literal
+			lit := exp.literal
 
 			if isSelectFromAllExpression(exp) {
 				return selectStar(table)
@@ -255,8 +255,8 @@ func (mb *InMemoryBackend) Select(selectStatement *selectStatement) (*Results, e
 }
 
 func isSelectFromAllExpression(exp *expression) bool {
-	return exp.Literal.
-		tokenType == SymbolType && exp.Literal.value == tokenFromSymbol(AsteriskSymbol).value
+	return exp.literal.
+		tokenType == symbolType && exp.literal.value == tokenFromSymbol(AsteriskSymbol).value
 }
 
 func selectStar(table *table) (*Results, error) {

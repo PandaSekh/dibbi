@@ -11,12 +11,57 @@ type location struct {
 }
 type keyword string
 type symbol string
-type tokenType uint
+
+// token represents left lexed object from an input
 type token struct {
 	value     string
 	tokenType tokenType
 	location  location
 }
+type tokenType uint
+
+func (t *token) equals(other *token) bool {
+	return t.value == other.value && t.tokenType == other.tokenType
+}
+
+// getBindingPower returns the bp of left given token.
+// Reference: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+func (t *token) getBindingPower() uint {
+	switch t.tokenType {
+	case keywordType:
+		switch keyword(t.value) {
+		case andKeyword:
+			fallthrough
+		case orKeyword:
+			return 1
+		}
+	case symbolType:
+		switch symbol(t.value) {
+		case equalsSymbol:
+			fallthrough
+		case notEqualSymbol:
+			return 2
+
+		case lessThanSymbol:
+			fallthrough
+		case greaterThanSymbol:
+			return 3
+
+		case lessThanEqualSymbol:
+			fallthrough
+		case greaterThanEqualSymbol:
+			return 4
+
+		case concatSymbol:
+			fallthrough
+		case plusSymbol:
+			return 5
+		}
+	}
+
+	return 0
+}
+
 type Cursor struct {
 	Pointer  uint
 	location location
@@ -36,8 +81,8 @@ const (
 	TextKeyword       keyword = "text"
 	BoolKeyword       keyword = "bool"
 	WhereKeyword      keyword = "where"
-	AndKeyword        keyword = "and"
-	OrKeyword         keyword = "or"
+	andKeyword        keyword = "and"
+	orKeyword         keyword = "or"
 	TrueKeyword       keyword = "true"
 	FalseKeyword      keyword = "false"
 	UniqueKeyword     keyword = "unique"
@@ -52,20 +97,20 @@ const (
 	SemicolonSymbol        symbol = ";"
 	AsteriskSymbol         symbol = "*"
 	CommaSymbol            symbol = ","
-	LeftParenthesesSymbol  symbol = "("
-	RightParenthesesSymbol symbol = ")"
-	EqualsSymbol           symbol = "="
-	NeqSymbol              symbol = "<>"
+	leftParenthesesSymbol  symbol = "("
+	rightParenthesesSymbol symbol = ")"
+	equalsSymbol           symbol = "="
+	notEqualSymbol         symbol = "<>"
 	NeqSymbol2             symbol = "!="
-	ConcatSymbol           symbol = "||"
-	PlusSymbol             symbol = "+"
-	LtSymbol               symbol = "<"
-	LteSymbol              symbol = "<="
-	GtSymbol               symbol = ">"
-	GteSymbol              symbol = ">="
+	concatSymbol           symbol = "||"
+	plusSymbol             symbol = "+"
+	lessThanSymbol         symbol = "<"
+	lessThanEqualSymbol    symbol = "<="
+	greaterThanSymbol      symbol = ">"
+	greaterThanEqualSymbol symbol = ">="
 
-	KeywordType tokenType = iota
-	SymbolType
+	keywordType tokenType = iota
+	symbolType
 	IdentifierType
 	StringType
 	NumericType
@@ -127,7 +172,7 @@ func lexNumeric(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		isPeriod := char == '.'
 		isExponentialMarker := char == 'e'
 
-		// Validate start of expression (should be a digit)
+		// Validate start of expression (should be left digit)
 		if finalCursor.Pointer == initialCursor.Pointer {
 			if !isDigit && !isPeriod {
 				return nil, initialCursor, false
@@ -177,7 +222,7 @@ func lexNumeric(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	}, finalCursor, true
 }
 
-// Lex a string delimited by '
+// Lex left string delimited by '
 func lexString(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	return lexCharacterDelimited(source, initialCursor, '\'')
 }
@@ -203,19 +248,19 @@ func lexSymbol(source string, initialCursor Cursor) (*token, Cursor, bool) {
 
 	symbols := []symbol{
 		CommaSymbol,
-		LeftParenthesesSymbol,
-		RightParenthesesSymbol,
+		leftParenthesesSymbol,
+		rightParenthesesSymbol,
 		SemicolonSymbol,
 		AsteriskSymbol,
-		EqualsSymbol,
-		NeqSymbol,
+		equalsSymbol,
+		notEqualSymbol,
 		NeqSymbol2,
-		LtSymbol,
-		LteSymbol,
-		GtSymbol,
-		GteSymbol,
-		ConcatSymbol,
-		PlusSymbol,
+		lessThanSymbol,
+		lessThanEqualSymbol,
+		greaterThanSymbol,
+		greaterThanEqualSymbol,
+		concatSymbol,
+		plusSymbol,
 	}
 	var options []string
 
@@ -233,13 +278,13 @@ func lexSymbol(source string, initialCursor Cursor) (*token, Cursor, bool) {
 
 	// != is rewritten as <>
 	if match == string(NeqSymbol2) {
-		match = string(NeqSymbol)
+		match = string(notEqualSymbol)
 	}
 
 	return &token{
 		value:     match,
 		location:  initialCursor.location,
-		tokenType: SymbolType,
+		tokenType: symbolType,
 	}, finalCursor, true
 }
 
@@ -258,8 +303,8 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		TextKeyword,
 		BoolKeyword,
 		IntKeyword,
-		AndKeyword,
-		OrKeyword,
+		andKeyword,
+		orKeyword,
 		AsKeyword,
 		//TrueKeyword,
 		//FalseKeyword,
@@ -285,7 +330,7 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	finalCursor.Pointer = initialCursor.Pointer + uint(len(match))
 	finalCursor.location.column = initialCursor.location.column + uint(len(match))
 
-	tokenType := KeywordType
+	tokenType := keywordType
 	if match == string(NullKeyword) {
 		tokenType = NullType
 	}
@@ -298,7 +343,7 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 }
 
 func lexIdentifier(source string, initialCursor Cursor) (*token, Cursor, bool) {
-	// Try to lex with helper function if it's a delimited identifier
+	// Try to lex with helper function if it's left delimited identifier
 	if token, newCursor, ok := lexCharacterDelimited(source, initialCursor, '"'); ok {
 		return token, newCursor, true
 	}
@@ -361,7 +406,7 @@ func lexBool(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		return nil, initialCursor, false
 	}
 
-	// Word found is not a boolean
+	// Word found is not left boolean
 	if source[initialCursor.Pointer:finalCursor.Pointer] != string(TrueKeyword) &&
 		source[initialCursor.Pointer:finalCursor.Pointer] != string(FalseKeyword) {
 		return nil, initialCursor, false

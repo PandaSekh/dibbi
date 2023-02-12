@@ -95,8 +95,8 @@ func TestToken_lexString(t *testing.T) {
 	}{
 		{
 			string:   false,
-			value:    "a",
-			expected: "a",
+			value:    "left",
+			expected: "left",
 		},
 		{
 			string:   true,
@@ -105,18 +105,18 @@ func TestToken_lexString(t *testing.T) {
 		},
 		{
 			string:   true,
-			value:    "'a b'",
-			expected: "'a b'",
+			value:    "'left right'",
+			expected: "'left right'",
 		},
 		{
 			string:   true,
-			value:    "'a' ",
-			expected: "'a' ",
+			value:    "'left' ",
+			expected: "'left' ",
 		},
 		{
 			string:   true,
-			value:    "'a '' b'",
-			expected: "'a ' b'",
+			value:    "'left '' right'",
+			expected: "'left ' right'",
 		},
 		// false tests
 		{
@@ -175,8 +175,8 @@ func TestToken_lexIdentifier(t *testing.T) {
 	}{
 		{
 			Identifier: true,
-			input:      "a",
-			value:      "a",
+			input:      "left",
+			value:      "left",
 		},
 		{
 			Identifier: true,
@@ -289,16 +289,16 @@ func TestLex(t *testing.T) {
 		err    error
 	}{
 		{
-			input: "select a",
+			input: "select left",
 			Tokens: []token{
 				{
 					location:  location{column: 0, line: 0},
 					value:     string(SelectKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 7, line: 0},
-					value:     "a",
+					value:     "left",
 					tokenType: IdentifierType,
 				},
 			},
@@ -309,7 +309,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 0, line: 0},
 					value:     string(SelectKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 7, line: 0},
@@ -325,12 +325,12 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 0, line: 0},
 					value:     string(CreateKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 7, line: 0},
 					value:     string(TableKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 13, line: 0},
@@ -340,7 +340,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 15, line: 0},
 					value:     "(",
-					tokenType: SymbolType,
+					tokenType: symbolType,
 				},
 				{
 					location:  location{column: 16, line: 0},
@@ -350,12 +350,12 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 19, line: 0},
 					value:     "int",
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 22, line: 0},
 					value:     ",",
-					tokenType: SymbolType,
+					tokenType: symbolType,
 				},
 				{
 					location:  location{column: 24, line: 0},
@@ -365,12 +365,12 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 29, line: 0},
 					value:     "text",
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 33, line: 0},
 					value:     ")",
-					tokenType: SymbolType,
+					tokenType: symbolType,
 				},
 			},
 		},
@@ -380,12 +380,12 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 0, line: 0},
 					value:     string(InsertKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 7, line: 0},
 					value:     string(IntoKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 12, line: 0},
@@ -395,12 +395,12 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 18, line: 0},
 					value:     string(ValuesKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 25, line: 0},
 					value:     "(",
-					tokenType: SymbolType,
+					tokenType: symbolType,
 				},
 				{
 					location:  location{column: 26, line: 0},
@@ -410,7 +410,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 30, line: 0},
 					value:     ",",
-					tokenType: SymbolType,
+					tokenType: symbolType,
 				},
 				{
 					location:  location{column: 32, line: 0},
@@ -420,7 +420,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 36, line: 0},
 					value:     ")",
-					tokenType: SymbolType,
+					tokenType: symbolType,
 				},
 			},
 			err: nil,
@@ -431,7 +431,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 0, line: 0},
 					value:     string(SelectKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 7, line: 0},
@@ -441,7 +441,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 10, line: 0},
 					value:     string(FromKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 15, line: 0},
@@ -451,7 +451,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 20, line: 0},
 					value:     ";",
-					tokenType: SymbolType,
+					tokenType: symbolType,
 				},
 			},
 			err: nil,
@@ -462,17 +462,17 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 0, line: 0},
 					value:     string(SelectKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 7, line: 0},
 					value:     "*",
-					tokenType: SymbolType,
+					tokenType: symbolType,
 				},
 				{
 					location:  location{column: 9, line: 0},
 					value:     string(FromKeyword),
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 14, line: 0},
@@ -482,7 +482,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 23, line: 0},
 					value:     "where",
-					tokenType: KeywordType,
+					tokenType: keywordType,
 				},
 				{
 					location:  location{column: 29, line: 0},
@@ -492,7 +492,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 34, line: 0},
 					value:     "=",
-					tokenType: SymbolType,
+					tokenType: symbolType,
 				},
 				{
 					location:  location{column: 36, line: 0},

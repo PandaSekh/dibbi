@@ -45,25 +45,6 @@ func (s *insertStatement) String() string {
 	return fmt.Sprintf("Table: %v, Values: %v", s.Table.value, s.Values)
 }
 
-type ExpressionType uint
-
-const (
-	LiteralType ExpressionType = iota
-)
-
-func (lt ExpressionType) String() string {
-	return [...]string{"Literal"}[lt]
-}
-
-type expression struct {
-	Literal        *token
-	ExpressionType ExpressionType
-}
-
-func (e *expression) String() string {
-	return fmt.Sprintf("Literal: %v, Type: %v", e.Literal.value, e.ExpressionType)
-}
-
 // Create
 
 type columnDefinition struct {
@@ -85,4 +66,32 @@ type selectStatement struct {
 
 func (s *selectStatement) String() string {
 	return fmt.Sprintf("From: %v, Items: %v", s.from.value, s.items)
+}
+
+// Expressions
+type expressionType uint
+
+const (
+	literalType expressionType = iota
+	binaryType
+)
+
+func (lt expressionType) String() string {
+	return [...]string{"literal"}[lt]
+}
+
+type binaryExpression struct {
+	left     expression
+	right    expression
+	operator token
+}
+
+type expression struct {
+	literal        *token
+	binary         *binaryExpression
+	expressionType expressionType
+}
+
+func (e *expression) String() string {
+	return fmt.Sprintf("literal: %v, Type: %v", e.literal.value, e.expressionType)
 }
