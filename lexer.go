@@ -12,7 +12,7 @@ type location struct {
 type keyword string
 type symbol string
 
-// token represents left lexed object from an input
+// token represents a lexed object from an input
 type token struct {
 	value     string
 	tokenType tokenType
@@ -24,7 +24,7 @@ func (t *token) equals(other *token) bool {
 	return t.value == other.value && t.tokenType == other.tokenType
 }
 
-// getBindingPower returns the bp of left given token.
+// getBindingPower returns the bp of a given token.
 // Reference: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 func (t *token) getBindingPower() uint {
 	switch t.tokenType {
@@ -111,10 +111,10 @@ const (
 
 	keywordType tokenType = iota
 	symbolType
-	IdentifierType
-	StringType
+	identifierType
+	stringType
 	NumericType
-	BooleanType
+	booleanType
 	NullType
 )
 
@@ -172,7 +172,7 @@ func lexNumeric(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		isPeriod := char == '.'
 		isExponentialMarker := char == 'e'
 
-		// Validate start of expression (should be left digit)
+		// Validate start of expression (should be a digit)
 		if finalCursor.Pointer == initialCursor.Pointer {
 			if !isDigit && !isPeriod {
 				return nil, initialCursor, false
@@ -222,7 +222,7 @@ func lexNumeric(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	}, finalCursor, true
 }
 
-// Lex left string delimited by '
+// Lex a string delimited by '
 func lexString(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	return lexCharacterDelimited(source, initialCursor, '\'')
 }
@@ -343,7 +343,7 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 }
 
 func lexIdentifier(source string, initialCursor Cursor) (*token, Cursor, bool) {
-	// Try to lex with helper function if it's left delimited identifier
+	// Try to lex with helper function if it's a delimited identifier
 	if token, newCursor, ok := lexCharacterDelimited(source, initialCursor, '"'); ok {
 		return token, newCursor, true
 	}
@@ -381,7 +381,7 @@ func lexIdentifier(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	return &token{
 		value:     strings.ToLower(string(value)),
 		location:  initialCursor.location,
-		tokenType: IdentifierType,
+		tokenType: identifierType,
 	}, finalCursor, true
 }
 
@@ -406,7 +406,7 @@ func lexBool(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		return nil, initialCursor, false
 	}
 
-	// Word found is not left boolean
+	// Word found is not a boolean
 	if source[initialCursor.Pointer:finalCursor.Pointer] != string(TrueKeyword) &&
 		source[initialCursor.Pointer:finalCursor.Pointer] != string(FalseKeyword) {
 		return nil, initialCursor, false
@@ -415,6 +415,6 @@ func lexBool(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	return &token{
 		value:     source[initialCursor.Pointer:finalCursor.Pointer],
 		location:  initialCursor.location,
-		tokenType: BooleanType,
+		tokenType: booleanType,
 	}, finalCursor, true
 }

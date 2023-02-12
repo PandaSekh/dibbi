@@ -62,6 +62,7 @@ type createTableStatement struct {
 type selectStatement struct {
 	from  *token
 	items []*expression
+	where *expression
 }
 
 func (s *selectStatement) String() string {

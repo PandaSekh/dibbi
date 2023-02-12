@@ -299,7 +299,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 7, line: 0},
 					value:     "left",
-					tokenType: IdentifierType,
+					tokenType: identifierType,
 				},
 			},
 		},
@@ -335,7 +335,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 13, line: 0},
 					value:     "u",
-					tokenType: IdentifierType,
+					tokenType: identifierType,
 				},
 				{
 					location:  location{column: 15, line: 0},
@@ -345,7 +345,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 16, line: 0},
 					value:     "id",
-					tokenType: IdentifierType,
+					tokenType: identifierType,
 				},
 				{
 					location:  location{column: 19, line: 0},
@@ -360,7 +360,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 24, line: 0},
 					value:     "name",
-					tokenType: IdentifierType,
+					tokenType: identifierType,
 				},
 				{
 					location:  location{column: 29, line: 0},
@@ -390,7 +390,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 12, line: 0},
 					value:     "users",
-					tokenType: IdentifierType,
+					tokenType: identifierType,
 				},
 				{
 					location:  location{column: 18, line: 0},
@@ -436,7 +436,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 7, line: 0},
 					value:     "id",
-					tokenType: IdentifierType,
+					tokenType: identifierType,
 				},
 				{
 					location:  location{column: 10, line: 0},
@@ -446,7 +446,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 15, line: 0},
 					value:     "users",
-					tokenType: IdentifierType,
+					tokenType: identifierType,
 				},
 				{
 					location:  location{column: 20, line: 0},
@@ -477,7 +477,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 14, line: 0},
 					value:     "my_table",
-					tokenType: IdentifierType,
+					tokenType: identifierType,
 				},
 				{
 					location:  location{column: 23, line: 0},
@@ -487,7 +487,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 29, line: 0},
 					value:     "name",
-					tokenType: IdentifierType,
+					tokenType: identifierType,
 				},
 				{
 					location:  location{column: 34, line: 0},
@@ -497,7 +497,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 36, line: 0},
 					value:     "hello_world",
-					tokenType: StringType,
+					tokenType: stringType,
 				},
 			},
 			err: nil,

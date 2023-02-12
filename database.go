@@ -1,7 +1,5 @@
 package dibbi
 
-import "errors"
-
 // ColumnType defines the available column types
 type ColumnType uint
 
@@ -48,14 +46,6 @@ type Index struct {
 	Unique     bool
 	PrimaryKey bool
 }
-
-var (
-	ErrTableDoesNotExist  = errors.New("table does not exist")
-	ErrColumnDoesNotExist = errors.New("column does not exist")
-	ErrInvalidSelectItem  = errors.New("select item is not valid")
-	ErrInvalidDatatype    = errors.New("invalid datatype")
-	ErrMissingValues      = errors.New("missing values")
-)
 
 type TableMetadata struct {
 	Name    string

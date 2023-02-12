@@ -51,7 +51,7 @@ func (mc memoryCell) equals(b memoryCell) bool {
 	return bytes.Equal(mc, b)
 }
 
-// literalToMemoryCell maps left Go value into left memory Cell
+// literalToMemoryCell maps a Go value into a memory Cell
 func literalToMemoryCell(t *token) memoryCell {
 	if t.tokenType == NumericType {
 		buf := new(bytes.Buffer)
@@ -70,12 +70,12 @@ func literalToMemoryCell(t *token) memoryCell {
 	}
 
 	if t.
-		tokenType == StringType {
+		tokenType == stringType {
 		return memoryCell(t.value)
 	}
 
 	if t.
-		tokenType == BooleanType {
+		tokenType == booleanType {
 		if t.value == "true" {
 			return []byte{1}
 		}
@@ -179,12 +179,12 @@ func tokenToCell(t *token) memoryCell {
 	}
 
 	if t.
-		tokenType == StringType {
+		tokenType == stringType {
 		return memoryCell(t.value)
 	}
 
 	if t.
-		tokenType == BooleanType {
+		tokenType == booleanType {
 		return literalToMemoryCell(t)
 	}
 
@@ -218,7 +218,7 @@ func (mb *InMemoryBackend) Select(selectStatement *selectStatement) (*Results, e
 			}
 
 			if lit.
-				tokenType == IdentifierType {
+				tokenType == identifierType {
 				found := false
 				for i, tableCol := range table.columns {
 					if tableCol == lit.value {
@@ -285,4 +285,30 @@ func selectStar(table *table) (*Results, error) {
 		Columns: Columns,
 		Rows:    results,
 	}, nil
+}
+
+func (t *table) evaluateLiteralCell(rowIndex uint, exp expression) (memoryCell, string, ColumnType, error) {
+	if exp.expressionType != literalType {
+		return nil, "", 0, ErrInvalidCell
+	}
+
+	lit := exp.literal
+	if lit.tokenType == identifierType {
+		for i, tableCol := range t.columns {
+			if tableCol == lit.value {
+				return t.rows[rowIndex][i], tableCol, t.columnTypes[i], nil
+			}
+		}
+
+		return nil, "", 0, ErrColumnDoesNotExist
+	}
+
+	columnType := IntType
+	if lit.tokenType == stringType {
+		columnType = TextType
+	} else if lit.tokenType == booleanType {
+		columnType = BoolType
+	}
+
+	return literalToMemoryCell(lit), "?column?", columnType, nil
 }

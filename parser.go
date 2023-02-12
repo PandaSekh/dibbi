@@ -45,7 +45,7 @@ func parse(source string) (*ast, error) {
 
 		ast.Statements = append(ast.Statements, stmt)
 
-		// Finds left semicolon
+		// Finds a semicolon
 		semicolonIsPresent := false
 		for assertIsToken(tokens, cursor, tokenFromSymbol(SemicolonSymbol)) {
 			cursor++
@@ -64,7 +64,7 @@ func parse(source string) (*ast, error) {
 func parseStatement(tokens []*token, initialCursor uint, delimiter token) (*statement, uint, bool) {
 	cursor := initialCursor
 
-	// Look for left SELECT statement
+	// Look for a SELECT statement
 	selectStmt, newCursor, ok := parseSelectStatement(tokens, cursor, delimiter)
 	if ok {
 		return &statement{
@@ -73,7 +73,7 @@ func parseStatement(tokens []*token, initialCursor uint, delimiter token) (*stat
 		}, newCursor, true
 	}
 
-	// Look for left INSERT statement
+	// Look for a INSERT statement
 	insertStmt, newCursor, ok := parseInsertStatement(tokens, cursor)
 	if ok {
 		return &statement{
@@ -82,7 +82,7 @@ func parseStatement(tokens []*token, initialCursor uint, delimiter token) (*stat
 		}, newCursor, true
 	}
 
-	// Look for left CREATE statement
+	// Look for a CREATE statement
 	createTableStmt, newCursor, ok := parseCreateTableStatement(tokens, cursor)
 	if ok {
 		return &statement{
@@ -115,13 +115,27 @@ func parseSelectStatement(tokens []*token, initialCursor uint, delimiter token) 
 	if assertIsToken(tokens, cursor, tokenFromKeyword(FromKeyword)) {
 		cursor++
 
-		from, newCursor, ok := parseTokenType(tokens, cursor, IdentifierType)
+		from, newCursor, ok := parseToken(tokens, cursor, tokenFromKeyword(FromKeyword))
 		if !ok {
 			printHelpMessage(tokens, cursor, "Expected FROM token")
 			return nil, initialCursor, false
 		}
 
 		selectStmt.from = from
+		cursor = newCursor
+
+	}
+
+	if assertIsToken(tokens, cursor, tokenFromKeyword(WhereKeyword)) {
+		cursor++
+
+		where, newCursor, ok := parseExpression(tokens, cursor, []token{delimiter}, 0)
+		if !ok {
+			printHelpMessage(tokens, cursor, "Expected WHERE conditionals")
+			return nil, initialCursor, false
+		}
+
+		selectStmt.where = where
 		cursor = newCursor
 	}
 
@@ -146,7 +160,7 @@ func parseInsertStatement(tokens []*token, initialCursor uint) (*insertStatement
 	cursor++
 
 	// Look for table name
-	table, newCursor, ok := parseTokenType(tokens, cursor, IdentifierType)
+	table, newCursor, ok := parseTokenType(tokens, cursor, identifierType)
 	if !ok {
 		printHelpMessage(tokens, cursor, "Expected table name")
 		return nil, initialCursor, false
@@ -160,7 +174,7 @@ func parseInsertStatement(tokens []*token, initialCursor uint) (*insertStatement
 	}
 	cursor++
 
-	// Look for left paren
+	// Look for a paren
 	if !assertIsToken(tokens, cursor, tokenFromSymbol(leftParenthesesSymbol)) {
 		printHelpMessage(tokens, cursor, "Expected left paren")
 		return nil, initialCursor, false
@@ -200,7 +214,7 @@ func parseCreateTableStatement(tokens []*token, initialCursor uint) (*createTabl
 	}
 	cursor++
 
-	name, newCursor, ok := parseTokenType(tokens, cursor, IdentifierType)
+	name, newCursor, ok := parseTokenType(tokens, cursor, identifierType)
 	if !ok {
 		printHelpMessage(tokens, cursor, "Expected table name")
 		return nil, initialCursor, false
@@ -231,7 +245,7 @@ func parseCreateTableStatement(tokens []*token, initialCursor uint) (*createTabl
 	}, cursor, true
 }
 
-// parseTokenType looks for left token of the given type
+// parseTokenType looks for a token of the given type
 func parseTokenType(tokens []*token, initialCursor uint, tokenType tokenType) (*token, uint, bool) {
 	cursor := initialCursor
 
@@ -247,7 +261,7 @@ func parseTokenType(tokens []*token, initialCursor uint, tokenType tokenType) (*
 	return nil, initialCursor, false
 }
 
-// parseToken looks for tokenToFind in left list of tokens
+// parseToken looks for tokenToFind in a list of tokens
 func parseToken(tokens []*token, initialCursor uint, tokenToFind token) (*token, uint, bool) {
 	cursor := initialCursor
 
@@ -317,7 +331,7 @@ outer:
 func parseLiteralExpression(tokens []*token, initialCursor uint) (*expression, uint, bool) {
 	cursor := initialCursor
 
-	kinds := []tokenType{IdentifierType, NumericType, StringType}
+	kinds := []tokenType{identifierType, NumericType, stringType}
 	for _, kind := range kinds {
 		t, newCursor, ok := parseTokenType(tokens, cursor, kind)
 		if ok {
@@ -336,12 +350,12 @@ func parseExpression(tokens []*token, initialCursor uint, delimiters []token, mi
 
 	var exp *expression
 
-	// try to find left opening parenthesis
+	// try to find a opening parenthesis
 	_, newCursor, ok := parseToken(tokens, cursor, tokenFromSymbol(leftParenthesesSymbol))
 
 	if ok {
-		// if there's left (, we try to parse the expression inside
-		// it until left delimiter or left closing parenthesis is found
+		// if there's a (, we try to parse the expression inside
+		// it until a delimiter or a closing parenthesis is found
 		cursor = newCursor
 		rightParenToken := tokenFromSymbol(rightParenthesesSymbol)
 
@@ -365,7 +379,7 @@ func parseExpression(tokens []*token, initialCursor uint, delimiters []token, mi
 
 	lastCursor := cursor
 outer:
-	// look for left binary operator
+	// look for a binary operator
 	for cursor < uint(len(tokens)) {
 		for _, d := range delimiters {
 			_, _, ok = parseToken(tokens, cursor, d)
@@ -414,8 +428,8 @@ outer:
 			return nil, initialCursor, false
 		}
 
-		// the found expression is then set to left new binary expression containing
-		// the previously found expression on the left and the just-parsed expression on the right.
+		// the found expression is then set to a new binary expression containing
+		// the previously found expression on the a and the just-parsed expression on the right.
 		exp = &expression{
 			binary: &binaryExpression{
 				*exp,
@@ -440,13 +454,13 @@ func parseColumnDefinitions(tokens []*token, initialCursor uint, delimiter token
 			return nil, initialCursor, false
 		}
 
-		// Look for left delimiter
+		// Look for a delimiter
 		current := tokens[cursor]
 		if delimiter.Equals(current) {
 			break
 		}
 
-		// Look for left comma
+		// Look for a comma
 		if len(cds) > 0 {
 			if !assertIsToken(tokens, cursor, tokenFromSymbol(CommaSymbol)) {
 				printHelpMessage(tokens, cursor, "Expected comma")
@@ -456,15 +470,15 @@ func parseColumnDefinitions(tokens []*token, initialCursor uint, delimiter token
 			cursor++
 		}
 
-		// Look for left column name
-		id, newCursor, ok := parseTokenType(tokens, cursor, IdentifierType)
+		// Look for a column name
+		id, newCursor, ok := parseTokenType(tokens, cursor, identifierType)
 		if !ok {
 			printHelpMessage(tokens, cursor, "Expected column name")
 			return nil, initialCursor, false
 		}
 		cursor = newCursor
 
-		// Look for left column Type
+		// Look for a column Type
 		ty, newCursor, ok := parseTokenType(tokens, cursor, keywordType)
 		if !ok {
 			printHelpMessage(tokens, cursor, "Expected column Type")
