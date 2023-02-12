@@ -80,7 +80,7 @@ func (t *token) Equals(other *token) bool {
 func Lex(source string) ([]*token, error) {
 	var tokens []*token
 	cur := Cursor{}
-	lexers := []lexer{lexKeyword, lexSymbol, lexString, lexNumeric, lexIdentifier}
+	lexers := []lexer{lexKeyword, lexSymbol, lexString, lexNumeric, lexIdentifier, lexBool}
 
 lex:
 	for cur.Pointer < uint(len(source)) {
@@ -261,8 +261,8 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		AndKeyword,
 		OrKeyword,
 		AsKeyword,
-		TrueKeyword,
-		FalseKeyword,
+		//TrueKeyword,
+		//FalseKeyword,
 		UniqueKeyword,
 		IndexKeyword,
 		OnKeyword,
@@ -286,9 +286,9 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	finalCursor.location.column = initialCursor.location.column + uint(len(match))
 
 	tokenType := KeywordType
-	if match == string(TrueKeyword) || match == string(FalseKeyword) {
-		tokenType = BooleanType
-	}
+	//if match == string(TrueKeyword) || match == string(FalseKeyword) {
+	//	tokenType = BooleanType
+	//}
 
 	if match == string(NullKeyword) {
 		tokenType = NullType
@@ -341,5 +341,39 @@ func lexIdentifier(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		value:     strings.ToLower(string(value)),
 		location:  initialCursor.location,
 		tokenType: IdentifierType,
+	}, finalCursor, true
+}
+
+func lexBool(source string, initialCursor Cursor) (*token, Cursor, bool) {
+	finalCursor := initialCursor
+
+	for ; finalCursor.Pointer < uint(len(source)); finalCursor.Pointer++ {
+		char := source[finalCursor.Pointer]
+		finalCursor.location.column++
+
+		// todo refactor
+		isLetterOfInterest := char == 't' || char == 'r' || char == 'u' || char == 'e' ||
+			char == 'f' || char == 'a' || char == 'l' || char == 's'
+
+		if !isLetterOfInterest {
+			break
+		}
+	}
+
+	// No characters accumulated
+	if finalCursor.Pointer == initialCursor.Pointer {
+		return nil, initialCursor, false
+	}
+
+	// Word found is not a boolean
+	if source[initialCursor.Pointer:finalCursor.Pointer] != string(TrueKeyword) &&
+		source[initialCursor.Pointer:finalCursor.Pointer] != string(FalseKeyword) {
+		return nil, initialCursor, false
+	}
+
+	return &token{
+		value:     source[initialCursor.Pointer:finalCursor.Pointer],
+		location:  initialCursor.location,
+		tokenType: BooleanType,
 	}, finalCursor, true
 }
