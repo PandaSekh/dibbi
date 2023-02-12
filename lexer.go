@@ -24,18 +24,30 @@ type Cursor struct {
 type lexer func(string, Cursor) (*token, Cursor, bool)
 
 const (
-	SelectKeyword keyword = "select"
-	FromKeyword   keyword = "from"
-	AsKeyword     keyword = "as"
-	TableKeyword  keyword = "table"
-	CreateKeyword keyword = "create"
-	InsertKeyword keyword = "insert"
-	IntoKeyword   keyword = "into"
-	ValuesKeyword keyword = "values"
-	IntKeyword    keyword = "int"
-	TextKeyword   keyword = "text"
-	BoolKeyword   keyword = "bool"
-	WhereKeyword  keyword = "where"
+	SelectKeyword     keyword = "select"
+	FromKeyword       keyword = "from"
+	AsKeyword         keyword = "as"
+	TableKeyword      keyword = "table"
+	CreateKeyword     keyword = "create"
+	InsertKeyword     keyword = "insert"
+	IntoKeyword       keyword = "into"
+	ValuesKeyword     keyword = "values"
+	IntKeyword        keyword = "int"
+	TextKeyword       keyword = "text"
+	BoolKeyword       keyword = "bool"
+	WhereKeyword      keyword = "where"
+	AndKeyword        keyword = "and"
+	OrKeyword         keyword = "or"
+	TrueKeyword       keyword = "true"
+	FalseKeyword      keyword = "false"
+	UniqueKeyword     keyword = "unique"
+	IndexKeyword      keyword = "index"
+	OnKeyword         keyword = "on"
+	PrimaryKeyKeyword keyword = "primary key"
+	NullKeyword       keyword = "null"
+	LimitKeyword      keyword = "limit"
+	OffsetKeyword     keyword = "offset"
+	DropKeyword       keyword = "drop"
 
 	SemicolonSymbol        symbol = ";"
 	AsteriskSymbol         symbol = "*"
@@ -43,6 +55,14 @@ const (
 	LeftParenthesesSymbol  symbol = "("
 	RightParenthesesSymbol symbol = ")"
 	EqualsSymbol           symbol = "="
+	NeqSymbol              symbol = "<>"
+	NeqSymbol2             symbol = "!="
+	ConcatSymbol           symbol = "||"
+	PlusSymbol             symbol = "+"
+	LtSymbol               symbol = "<"
+	LteSymbol              symbol = "<="
+	GtSymbol               symbol = ">"
+	GteSymbol              symbol = ">="
 
 	KeywordType tokenType = iota
 	SymbolType
@@ -162,39 +182,6 @@ func lexString(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	return lexCharacterDelimited(source, initialCursor, '\'')
 }
 
-// Lex a boolean
-func lexBool(source string, initialCursor Cursor) (*token, Cursor, bool) {
-	finalCursor := initialCursor
-
-	for ; finalCursor.Pointer < uint(len(source)); finalCursor.Pointer++ {
-		char := source[finalCursor.Pointer]
-		finalCursor.location.column++
-
-		// todo refactor
-		isLetterOfInterest := char == 't' || char == 'r' || char == 'u' || char == 'e' || char == 'f' || char == 'a' || char == 'l' || char == 's'
-
-		if !isLetterOfInterest {
-			break
-		}
-	}
-
-	// No characters accumulated
-	if finalCursor.Pointer == initialCursor.Pointer {
-		return nil, initialCursor, false
-	}
-
-	// Word found is not a boolean
-	if source[initialCursor.Pointer:finalCursor.Pointer] != "true" && source[initialCursor.Pointer:finalCursor.Pointer] != "false" {
-		return nil, initialCursor, false
-	}
-
-	return &token{
-		value:     source[initialCursor.Pointer:finalCursor.Pointer],
-		location:  initialCursor.location,
-		tokenType: BooleanType,
-	}, finalCursor, true
-}
-
 func lexSymbol(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	char := source[initialCursor.Pointer]
 	finalCursor := initialCursor
@@ -214,7 +201,22 @@ func lexSymbol(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		return nil, finalCursor, true
 	}
 
-	symbols := []symbol{CommaSymbol, LeftParenthesesSymbol, RightParenthesesSymbol, SemicolonSymbol, AsteriskSymbol, EqualsSymbol}
+	symbols := []symbol{
+		CommaSymbol,
+		LeftParenthesesSymbol,
+		RightParenthesesSymbol,
+		SemicolonSymbol,
+		AsteriskSymbol,
+		EqualsSymbol,
+		NeqSymbol,
+		NeqSymbol2,
+		LtSymbol,
+		LteSymbol,
+		GtSymbol,
+		GteSymbol,
+		ConcatSymbol,
+		PlusSymbol,
+	}
 	var options []string
 
 	for _, symbol := range symbols {
@@ -228,6 +230,11 @@ func lexSymbol(source string, initialCursor Cursor) (*token, Cursor, bool) {
 
 	finalCursor.Pointer = initialCursor.Pointer + uint(len(match))
 	finalCursor.location.column = initialCursor.location.column + uint(len(match))
+
+	// != is rewritten as <>
+	if match == string(NeqSymbol2) {
+		match = string(NeqSymbol)
+	}
 
 	return &token{
 		value:     match,
@@ -244,13 +251,25 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		ValuesKeyword,
 		TableKeyword,
 		CreateKeyword,
+		DropKeyword,
 		WhereKeyword,
 		FromKeyword,
 		IntoKeyword,
 		TextKeyword,
-		IntKeyword,
 		BoolKeyword,
+		IntKeyword,
+		AndKeyword,
+		OrKeyword,
 		AsKeyword,
+		//TrueKeyword,
+		//FalseKeyword,
+		UniqueKeyword,
+		IndexKeyword,
+		OnKeyword,
+		PrimaryKeyKeyword,
+		NullKeyword,
+		LimitKeyword,
+		OffsetKeyword,
 	}
 
 	var options []string
@@ -266,10 +285,19 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	finalCursor.Pointer = initialCursor.Pointer + uint(len(match))
 	finalCursor.location.column = initialCursor.location.column + uint(len(match))
 
+	tokenType := KeywordType
+	//if match == string(TrueKeyword) || match == string(FalseKeyword) {
+	//	tokenType = BooleanType
+	//}
+
+	if match == string(NullKeyword) {
+		tokenType = NullType
+	}
+
 	return &token{
 		value:     match,
 		location:  initialCursor.location,
-		tokenType: KeywordType,
+		tokenType: tokenType,
 	}, finalCursor, true
 }
 
@@ -313,5 +341,39 @@ func lexIdentifier(source string, initialCursor Cursor) (*token, Cursor, bool) {
 		value:     strings.ToLower(string(value)),
 		location:  initialCursor.location,
 		tokenType: IdentifierType,
+	}, finalCursor, true
+}
+
+func lexBool(source string, initialCursor Cursor) (*token, Cursor, bool) {
+	finalCursor := initialCursor
+
+	for ; finalCursor.Pointer < uint(len(source)); finalCursor.Pointer++ {
+		char := source[finalCursor.Pointer]
+		finalCursor.location.column++
+
+		// todo refactor
+		isLetterOfInterest := char == 't' || char == 'r' || char == 'u' || char == 'e' ||
+			char == 'f' || char == 'a' || char == 'l' || char == 's'
+
+		if !isLetterOfInterest {
+			break
+		}
+	}
+
+	// No characters accumulated
+	if finalCursor.Pointer == initialCursor.Pointer {
+		return nil, initialCursor, false
+	}
+
+	// Word found is not a boolean
+	if source[initialCursor.Pointer:finalCursor.Pointer] != string(TrueKeyword) &&
+		source[initialCursor.Pointer:finalCursor.Pointer] != string(FalseKeyword) {
+		return nil, initialCursor, false
+	}
+
+	return &token{
+		value:     source[initialCursor.Pointer:finalCursor.Pointer],
+		location:  initialCursor.location,
+		tokenType: BooleanType,
 	}, finalCursor, true
 }

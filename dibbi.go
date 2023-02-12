@@ -1,9 +1,8 @@
+// Package dibbi contains functions to manipulate a dibbi instance.
 package dibbi
 
-var mb = newMemoryBackend()
-
 // Query the database with the given input.
-func Query(query string) (result *QueryResults, isResultPresent bool, error error) {
+func Query(query string, db *Database) (result *Results, isResultPresent bool, error error) {
 	ast, err := parse(query)
 	if err != nil {
 		return nil, false, err
@@ -12,17 +11,17 @@ func Query(query string) (result *QueryResults, isResultPresent bool, error erro
 	for _, stmt := range ast.Statements {
 		switch stmt.Type {
 		case CreateTableType:
-			err = mb.CreateTable(ast.Statements[0].createTableStatement)
+			err = (*db).CreateTable(ast.Statements[0].createTableStatement)
 			if err != nil {
 				return nil, false, err
 			}
 		case InsertType:
-			err = mb.Insert(stmt.InsertStatement)
+			err = (*db).Insert(stmt.InsertStatement)
 			if err != nil {
 				return nil, false, err
 			}
 		case SelectType:
-			results, err := mb.Select(stmt.selectStatement)
+			results, err := (*db).Select(stmt.selectStatement)
 			if err != nil {
 				return nil, false, err
 			}
