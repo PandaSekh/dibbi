@@ -1,6 +1,7 @@
 # 🐳 dibbi
 
 [![Build](https://github.com/PandaSekh/dibbi/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/PandaSekh/dibbi/actions/workflows/build_and_test.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/PandaSekh/dibbi.svg)](https://pkg.go.dev/github.com/PandaSekh/dibbi)
 
 In-memory non-persistent relational database.
 
