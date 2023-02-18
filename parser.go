@@ -95,52 +95,139 @@ func parseStatement(tokens []*token, initialCursor uint, delimiter token) (*stat
 }
 
 func parseSelectStatement(tokens []*token, initialCursor uint, delimiter token) (*selectStatement, uint, bool) {
+	var ok bool
 	cursor := initialCursor
-	if !assertIsToken(tokens, cursor, tokenFromKeyword(SelectKeyword)) {
-		return nil, initialCursor, false
-	}
-
-	cursor++
-
-	selectStmt := selectStatement{}
-
-	expressions, newCursor, ok := parseExpressions(tokens, cursor, []token{tokenFromKeyword(FromKeyword), delimiter})
+	_, cursor, ok = parseToken(tokens, cursor, tokenFromKeyword(SelectKeyword))
 	if !ok {
 		return nil, initialCursor, false
 	}
 
-	selectStmt.items = *expressions
+	slct := selectStatement{}
+
+	fromToken := tokenFromKeyword(FromKeyword)
+	item, newCursor, ok := parseSelectItem(tokens, cursor, []token{fromToken, delimiter})
+	if !ok {
+		return nil, initialCursor, false
+	}
+
+	slct.items = item
 	cursor = newCursor
 
-	if assertIsToken(tokens, cursor, tokenFromKeyword(FromKeyword)) {
-		cursor++
+	whereToken := tokenFromKeyword(WhereKeyword)
 
-		from, newCursor, ok := parseToken(tokens, cursor, tokenFromKeyword(FromKeyword))
+	_, cursor, ok = parseToken(tokens, cursor, fromToken)
+	if ok {
+		from, newCursor, ok := parseTokenType(tokens, cursor, identifierType)
 		if !ok {
-			printHelpMessage(tokens, cursor, "Expected FROM token")
+			printHelpMessage(tokens, cursor, "Expected FROM item")
 			return nil, initialCursor, false
 		}
 
-		selectStmt.from = from
+		slct.from = from
 		cursor = newCursor
-
 	}
 
-	if assertIsToken(tokens, cursor, tokenFromKeyword(WhereKeyword)) {
-		cursor++
+	limitToken := tokenFromKeyword(LimitKeyword)
+	offsetToken := tokenFromKeyword(OffsetKeyword)
 
-		where, newCursor, ok := parseExpression(tokens, cursor, []token{delimiter}, 0)
+	_, cursor, ok = parseToken(tokens, cursor, whereToken)
+	if ok {
+		where, newCursor, ok := parseExpression(tokens, cursor, []token{limitToken, offsetToken, delimiter}, 0)
 		if !ok {
 			printHelpMessage(tokens, cursor, "Expected WHERE conditionals")
 			return nil, initialCursor, false
 		}
 
-		selectStmt.where = where
+		slct.where = where
 		cursor = newCursor
 	}
 
-	return &selectStmt, cursor, true
+	//_, cursor, ok = parseToken(tokens, cursor, limitToken)
+	//if ok {
+	//	limit, newCursor, ok := parseExpression(tokens, cursor, []Token{offsetToken, delimiter}, 0)
+	//	if !ok {
+	//		helpMessage(tokens, cursor, "Expected LIMIT value")
+	//		return nil, initialCursor, false
+	//	}
+	//
+	//	slct.Limit = limit
+	//	cursor = newCursor
+	//}
 
+	//_, cursor, ok = parseToken(tokens, cursor, offsetToken)
+	//if ok {
+	//	offset, newCursor, ok := parseExpression(tokens, cursor, []Token{delimiter}, 0)
+	//	if !ok {
+	//		printHelpMessage(tokens, cursor, "Expected OFFSET value")
+	//		return nil, initialCursor, false
+	//	}
+	//
+	//	slct.Offset = offset
+	//	cursor = newCursor
+	//}
+
+	return &slct, cursor, true
+}
+
+func parseSelectItem(tokens []*token, initialCursor uint, delimiters []token) (*[]*selectItem, uint, bool) {
+	cursor := initialCursor
+
+	var s []*selectItem
+outer:
+	for {
+		if cursor >= uint(len(tokens)) {
+			return nil, initialCursor, false
+		}
+
+		current := tokens[cursor]
+		for _, delimiter := range delimiters {
+			if delimiter.equals(current) {
+				break outer
+			}
+		}
+
+		var ok bool
+		if len(s) > 0 {
+			_, cursor, ok = parseToken(tokens, cursor, tokenFromSymbol(CommaSymbol))
+			if !ok {
+				printHelpMessage(tokens, cursor, "Expected comma")
+				return nil, initialCursor, false
+			}
+		}
+
+		var si selectItem
+		_, cursor, ok = parseToken(tokens, cursor, tokenFromSymbol(AsteriskSymbol))
+		if ok {
+			si = selectItem{asterisk: true}
+		} else {
+			asToken := tokenFromKeyword(AsKeyword)
+			delimiters := append(delimiters, tokenFromSymbol(CommaSymbol), asToken)
+			exp, newCursor, ok := parseExpression(tokens, cursor, delimiters, 0)
+			if !ok {
+				printHelpMessage(tokens, cursor, "Expected expression")
+				return nil, initialCursor, false
+			}
+
+			cursor = newCursor
+			si.exp = exp
+
+			_, cursor, ok = parseToken(tokens, cursor, asToken)
+			if ok {
+				id, newCursor, ok := parseTokenType(tokens, cursor, identifierType)
+				if !ok {
+					printHelpMessage(tokens, cursor, "Expected identifier after AS")
+					return nil, initialCursor, false
+				}
+
+				cursor = newCursor
+				si.as = id
+			}
+		}
+
+		s = append(s, &si)
+	}
+
+	return &s, cursor, true
 }
 
 func parseInsertStatement(tokens []*token, initialCursor uint) (*insertStatement, uint, bool) {
@@ -331,7 +418,7 @@ outer:
 func parseLiteralExpression(tokens []*token, initialCursor uint) (*expression, uint, bool) {
 	cursor := initialCursor
 
-	kinds := []tokenType{identifierType, NumericType, stringType}
+	kinds := []tokenType{identifierType, numericType, stringType}
 	for _, kind := range kinds {
 		t, newCursor, ok := parseTokenType(tokens, cursor, kind)
 		if ok {

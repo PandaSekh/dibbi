@@ -113,9 +113,9 @@ const (
 	symbolType
 	identifierType
 	stringType
-	NumericType
+	numericType
 	booleanType
-	NullType
+	nullType
 )
 
 func (t *token) Equals(other *token) bool {
@@ -218,7 +218,7 @@ func lexNumeric(source string, initialCursor Cursor) (*token, Cursor, bool) {
 	return &token{
 		value:     source[initialCursor.Pointer:finalCursor.Pointer],
 		location:  initialCursor.location,
-		tokenType: NumericType,
+		tokenType: numericType,
 	}, finalCursor, true
 }
 
@@ -332,7 +332,7 @@ func lexKeyword(source string, initialCursor Cursor) (*token, Cursor, bool) {
 
 	tokenType := keywordType
 	if match == string(NullKeyword) {
-		tokenType = NullType
+		tokenType = nullType
 	}
 
 	return &token{

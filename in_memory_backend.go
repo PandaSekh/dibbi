@@ -8,6 +8,15 @@ import (
 	"strconv"
 )
 
+var (
+	trueToken  = token{tokenType: booleanType, value: "true"}
+	falseToken = token{tokenType: booleanType, value: "false"}
+
+	trueMemoryCell  = literalToMemoryCell(&trueToken)
+	falseMemoryCell = literalToMemoryCell(&falseToken)
+	nullMemoryCell  = literalToMemoryCell(&token{tokenType: nullType})
+)
+
 type memoryCell []byte
 
 func (mc memoryCell) AsInt() *int32 {
@@ -53,7 +62,7 @@ func (mc memoryCell) equals(b memoryCell) bool {
 
 // literalToMemoryCell maps a Go value into a memory Cell
 func literalToMemoryCell(t *token) memoryCell {
-	if t.tokenType == NumericType {
+	if t.tokenType == numericType {
 		buf := new(bytes.Buffer)
 		i, err := strconv.Atoi(t.value)
 		if err != nil {
@@ -162,101 +171,70 @@ func (mb *InMemoryBackend) Insert(inst *insertStatement) error {
 	return nil
 }
 
-func tokenToCell(t *token) memoryCell {
-	if t.
-		tokenType == NumericType {
-		buf := new(bytes.Buffer)
-		i, err := strconv.Atoi(t.value)
-		if err != nil {
-			panic(err)
-		}
-
-		err = binary.Write(buf, binary.BigEndian, int32(i))
-		if err != nil {
-			panic(err)
-		}
-		return buf.Bytes()
-	}
-
-	if t.
-		tokenType == stringType {
-		return memoryCell(t.value)
-	}
-
-	if t.
-		tokenType == booleanType {
-		return literalToMemoryCell(t)
-	}
-
-	return nil
-}
-
 func (mb *InMemoryBackend) Select(selectStatement *selectStatement) (*Results, error) {
-	table, ok := mb.tables[selectStatement.from.value]
-	if !ok {
-		return nil, ErrTableDoesNotExist
+	table := &table{}
+
+	if selectStatement.from != nil && selectStatement.from.value != "" {
+		var ok bool
+		table, ok = mb.tables[selectStatement.from.value]
+		if !ok {
+			return nil, ErrTableDoesNotExist
+		}
+	}
+
+	if selectStatement.items == nil || len(*selectStatement.items) == 0 {
+		return &Results{}, nil
 	}
 
 	var results [][]Cell
-	var Columns []ResultColumn
+	var columns []ResultColumn
 
-	for i, row := range table.rows {
+	if selectStatement.from == nil {
+		table.rows = [][]memoryCell{{}}
+	}
+
+	for row := range table.rows {
 		var result []Cell
-		isFirstRow := i == 0
+		isFirstRow := len(results) == 0
 
-		for _, exp := range selectStatement.items {
-			if exp.expressionType != literalType {
-				// Unsupported, doesn't currently exist, ignore.
-				fmt.Println("Skipping non-literal expression.")
-				continue
+		if selectStatement.where != nil {
+			value, _, _, err := table.evaluateCell(uint(row), *selectStatement.where)
+			if err != nil {
+				return nil, err
 			}
 
-			lit := exp.literal
+			if !*value.AsBool() {
+				continue
+			}
+		}
 
-			if isSelectFromAllExpression(exp) {
+		for _, column := range *selectStatement.items {
+			if column.asterisk {
+				// TODO improve
 				return selectStar(table)
 			}
-
-			if lit.
-				tokenType == identifierType {
-				found := false
-				for i, tableCol := range table.columns {
-					if tableCol == lit.value {
-						if isFirstRow {
-							Columns = append(Columns, ResultColumn{
-								Type: table.columnTypes[i],
-								Name: table.columns[i],
-							})
-						}
-
-						result = append(result, row[i])
-						found = true
-						break
-					}
-				}
-
-				if !found {
-					return nil, ErrColumnDoesNotExist
-				}
-
-				continue
+			value, columnName, columnType, err := table.evaluateCell(uint(row), *column.exp)
+			if err != nil {
+				return nil, err
 			}
 
-			return nil, ErrColumnDoesNotExist
+			if isFirstRow {
+				columns = append(columns, ResultColumn{
+					Type: columnType,
+					Name: columnName,
+				})
+			}
+
+			result = append(result, value)
 		}
 
 		results = append(results, result)
 	}
 
 	return &Results{
-		Columns: Columns,
+		Columns: columns,
 		Rows:    results,
 	}, nil
-}
-
-func isSelectFromAllExpression(exp *expression) bool {
-	return exp.literal.
-		tokenType == symbolType && exp.literal.value == tokenFromSymbol(AsteriskSymbol).value
 }
 
 func selectStar(table *table) (*Results, error) {
@@ -287,6 +265,47 @@ func selectStar(table *table) (*Results, error) {
 	}, nil
 }
 
+func tokenToCell(t *token) memoryCell {
+	if t.
+		tokenType == numericType {
+		buf := new(bytes.Buffer)
+		i, err := strconv.Atoi(t.value)
+		if err != nil {
+			panic(err)
+		}
+
+		err = binary.Write(buf, binary.BigEndian, int32(i))
+		if err != nil {
+			panic(err)
+		}
+		return buf.Bytes()
+	}
+
+	if t.
+		tokenType == stringType {
+		return memoryCell(t.value)
+	}
+
+	if t.
+		tokenType == booleanType {
+		return literalToMemoryCell(t)
+	}
+
+	return nil
+}
+
+// evaluateCell evaluates the expression in the cell
+func (t *table) evaluateCell(rowIndex uint, exp expression) (memoryCell, string, ColumnType, error) {
+	switch exp.expressionType {
+	case literalType:
+		return t.evaluateLiteralCell(rowIndex, exp)
+	case binaryType:
+		return t.evaluateBinaryCell(rowIndex, exp)
+	default:
+		return nil, "", 0, ErrInvalidCell
+	}
+}
+
 func (t *table) evaluateLiteralCell(rowIndex uint, exp expression) (memoryCell, string, ColumnType, error) {
 	if exp.expressionType != literalType {
 		return nil, "", 0, ErrInvalidCell
@@ -311,4 +330,96 @@ func (t *table) evaluateLiteralCell(rowIndex uint, exp expression) (memoryCell, 
 	}
 
 	return literalToMemoryCell(lit), "?column?", columnType, nil
+}
+
+func (t *table) evaluateBinaryCell(rowIndex uint, exp expression) (memoryCell, string, ColumnType, error) {
+	if exp.expressionType != binaryType {
+		return nil, "", 0, ErrInvalidCell
+	}
+
+	binaryExp := exp.binary
+
+	left, _, leftType, err := t.evaluateCell(rowIndex, binaryExp.left)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	right, _, rightType, err := t.evaluateCell(rowIndex, binaryExp.right)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	switch binaryExp.operator.tokenType {
+	case symbolType:
+		switch symbol(binaryExp.operator.value) {
+		case equalsSymbol:
+			areOperandsEquals := left.equals(right)
+			if leftType == TextType && rightType == TextType && areOperandsEquals {
+				return trueMemoryCell, "?column?", BoolType, nil
+			}
+
+			if leftType == IntType && rightType == IntType && areOperandsEquals {
+				return trueMemoryCell, "?column?", BoolType, nil
+			}
+
+			if leftType == BoolType && rightType == BoolType && areOperandsEquals {
+				return trueMemoryCell, "?column?", BoolType, nil
+			}
+
+			return falseMemoryCell, "?column?", BoolType, nil
+		case notEqualSymbol:
+			if leftType != rightType || !left.equals(right) {
+				return trueMemoryCell, "?column?", BoolType, nil
+			}
+
+			return falseMemoryCell, "?column?", BoolType, nil
+		case concatSymbol:
+			if leftType != TextType || rightType != TextType {
+				return nil, "", 0, ErrInvalidOperands
+			}
+
+			return literalToMemoryCell(&token{tokenType: stringType, value: *left.AsText() + *right.AsText()}), "?column?", TextType, nil
+		case plusSymbol:
+			if leftType != IntType || rightType != IntType {
+				return nil, "", 0, ErrInvalidOperands
+			}
+
+			iValue := int(*(left.AsInt()) + *(right.AsInt()))
+			return literalToMemoryCell(&token{tokenType: numericType, value: strconv.Itoa(iValue)}), "?column?", IntType, nil
+		default:
+			// TODO
+			break
+		}
+
+	case keywordType:
+		switch keyword(binaryExp.operator.value) {
+		case andKeyword:
+			if leftType != BoolType || rightType != BoolType {
+				return nil, "", 0, ErrInvalidOperands
+			}
+
+			res := falseMemoryCell
+			if *left.AsBool() && *right.AsBool() {
+				res = trueMemoryCell
+			}
+
+			return res, "?column?", BoolType, nil
+		case orKeyword:
+			if leftType != BoolType || rightType != BoolType {
+				return nil, "", 0, ErrInvalidOperands
+			}
+
+			res := falseMemoryCell
+			if *left.AsBool() || *right.AsBool() {
+				res = trueMemoryCell
+			}
+
+			return res, "?column?", BoolType, nil
+		default:
+			// TODO
+			break
+		}
+	}
+
+	return nil, "", 0, ErrInvalidCell
 }

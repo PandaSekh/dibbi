@@ -314,7 +314,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 7, line: 0},
 					value:     "1",
-					tokenType: NumericType,
+					tokenType: numericType,
 				},
 			},
 			err: nil,
@@ -405,7 +405,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 26, line: 0},
 					value:     "105",
-					tokenType: NumericType,
+					tokenType: numericType,
 				},
 				{
 					location:  location{column: 30, line: 0},
@@ -415,7 +415,7 @@ func TestLex(t *testing.T) {
 				{
 					location:  location{column: 32, line: 0},
 					value:     "233",
-					tokenType: NumericType,
+					tokenType: numericType,
 				},
 				{
 					location:  location{column: 36, line: 0},
